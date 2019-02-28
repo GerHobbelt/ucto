@@ -1110,7 +1110,7 @@ namespace Tokenizer {
 	args["generate_id"] = ids;
       }
       args["class"] = TiCC::UnicodeToUTF8(tok.type);
-      if ( tok.role | NOSPACE ){
+      if ( tok.role & NOSPACE ){
 	args["space"] = "no";
       }
       if ( outputclass != "current" ){
