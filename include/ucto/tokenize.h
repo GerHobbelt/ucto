@@ -119,6 +119,8 @@ namespace Tokenizer {
     // Tokenize a folia document
     bool tokenize( folia::Document& );
 
+    void tokenize_folia( const std::string&, const std::string&  );
+
     // Tokenize from an input text stream to a token vector
     // (representing a sentence)
     // non greedy. Stops after the first full sentence is returned.
@@ -260,6 +262,15 @@ namespace Tokenizer {
 
     void passthruLine( const UnicodeString&, bool& );
     void passthruLine( const std::string&, bool& );
+
+    std::vector<folia::Word*> add_words( folia::Sentence*,
+					 const std::string& tok_set,
+					 const std::vector<Token>& toks ) const;
+    void append_to_sentence( folia::Sentence *,
+			     const std::vector<Token>& ) const;
+    void handle_one_sentence( folia::Sentence *, int& );
+    void handle_one_paragraph( folia::Paragraph *, int& );
+    void handle_one_text_parent( folia::FoliaElement *, int& );
 
     //Processes tokens and initialises the sentence buffer. Returns the amount of sentences found
     int countSentences(bool forceentirebuffer = false);

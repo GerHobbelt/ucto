@@ -1093,6 +1093,325 @@ namespace Tokenizer {
     return parCount;
   }
 
+  vector<folia::Word*> TokenizerClass::add_words( folia::Sentence* s,
+						  const string& tok_set,
+						  const vector<Token>& toks ) const{
+    vector<folia::Word*> wv;
+    if ( tokDebug > 5 ){
+      LOG << "add_words\n" << toks << endl;
+    }
+    for ( const auto& tok : toks ){
+      if ( tokDebug > 5 ){
+	LOG << "add_result\n" << tok << endl;
+      }
+      folia::KWargs args;
+      string ids = get_parent_id( s );
+      if ( !ids.empty() ){
+	args["generate_id"] = ids;
+      }
+      args["class"] = TiCC::UnicodeToUTF8(tok.type);
+      if ( tok.role | NOSPACE ){
+	args["space"] = "no";
+      }
+      if ( outputclass != "current" ){
+	args["textclass"] = outputclass;
+      }
+      if ( !tok_set.empty() ){
+	args["set"] = tok_set;
+      }
+      folia::Word *w;
+#pragma omp critical (foliaupdate)
+      {
+	if ( tokDebug > 5 ){
+	  LOG << "create Word(" << args << ") = " << tok.us << endl;
+	}
+	w = new folia::Word( args, s->doc() );
+	w->setutext( tok.us, outputclass );
+	if ( tokDebug > 5 ){
+	  LOG << "add_result, create a word, done:" << w << endl;
+	}
+	s->append( w );
+      }
+      wv.push_back( w );
+    }
+    if ( text_redundancy == "full" ){
+      s->settext( s->str(outputclass), outputclass );
+    }
+    return wv;
+  }
+
+  void TokenizerClass::append_to_sentence( folia::Sentence *sent,
+					   const vector<Token>& toks ) const {
+    // add tokenization, when applicable
+    string tok_set;
+    if ( toks[0].lang_code != "default" ){
+      tok_set = "tokconfig-" + toks[0].lang_code;
+    }
+    else {
+      tok_set = "tokconfig-nld";
+    }
+    vector<folia::Word*> wv = add_words( sent, tok_set, toks );
+    string la;
+    if ( sent->hasannotation<folia::LangAnnotation>() ){
+      la = sent->annotation<folia::LangAnnotation>()->cls();
+    }
+    if ( tokDebug > 1 ){
+      LOG << "append_to_sentence()" << endl;
+      LOG << "fd.language = " << toks[0].lang_code << endl;
+      LOG << "default language = " << default_language << endl;
+      LOG << "sentence language = " << la << endl;
+    }
+    if ( !la.empty() && la != default_language
+	 && default_language != "none" ){
+      // skip
+      if ( tokDebug > 0 ){
+	LOG << "append_to_sentence() SKIP a sentence: " << la << endl;
+      }
+    }
+    else {
+      if ( default_language != "none"
+	   && toks[0].lang_code != "default"
+	   && toks[0].lang_code != default_language ){
+	if (!sent->doc()->isDeclared( folia::AnnotationType::LANG ) ){
+	  sent->doc()->declare( folia::AnnotationType::LANG,
+				ISO_SET, "annotator='ucto'" );
+	}
+	folia::KWargs args;
+	args["class"] = toks[0].lang_code;
+	string sett = sent->doc()->defaultset( folia::AnnotationType::LANG );
+	if ( !sett.empty() && sett != "default" ){
+	  args["set"] = sett;
+	}
+	folia::LangAnnotation *la = new folia::LangAnnotation( args, sent->doc() );
+	sent->append( la );
+      }
+    }
+  }
+
+  void TokenizerClass::handle_one_sentence( folia::Sentence *s,
+					    int& sentence_done ){
+    vector<folia::Word*> wv;
+    wv = s->words( inputclass );
+    if ( wv.empty() ){
+      wv = s->words();
+    }
+    if ( !wv.empty() ){
+      // there are already words.
+    }
+    else {
+      string text = s->str(inputclass);
+      if ( tokDebug > 0 ){
+	LOG << "handle_one_sentence() from string: '" << text << "'" << endl;
+      }
+      tokenizeLine( text );
+      vector<Token> sent = popSentence();
+      while ( sent.size() > 0 ){
+	append_to_sentence( s, sent );
+	sent = popSentence();
+      }
+    }
+    ++sentence_done;
+  }
+
+  void TokenizerClass::handle_one_paragraph( folia::Paragraph *p,
+					     int& sentence_done ){
+    // a Paragraph may contain both Word and Sentence nodes
+    // if so, the Sentences should be handled separately
+    vector<folia::Word*> wv = p->select<folia::Word>(false);
+    vector<folia::Sentence*> sv = p->select<folia::Sentence>(false);
+    if ( tokDebug > 1 ){
+      LOG << "found some Words " << wv << endl;
+      LOG << "found some Sentences " << sv << endl;
+    }
+    if ( sv.empty() ){
+      // No Sentence, so only words OR just text
+      string text = p->str(inputclass);
+      if ( tokDebug > 0 ){
+	LOG << "handle_one_paragraph:" << text << endl;
+      }
+      tokenizeLine( text );
+      vector<Token> toks = popSentence();
+      while ( !toks.empty() ){
+	folia::KWargs args;
+	string p_id = p->id();
+	if ( !p_id.empty() ){
+	  args["generate_id"] = p_id;
+	}
+	folia::Sentence *s = new folia::Sentence( args, p->doc() );
+	p->append( s );
+	append_to_sentence( s, toks );
+	toks = popSentence();
+      }
+    }
+    else {
+      // For now wu just IGNORE the loose words (backward compatability)
+      for ( const auto& s : sv ){
+	handle_one_sentence( s, sentence_done );
+      }
+    }
+  }
+
+  void TokenizerClass::handle_one_text_parent( folia::FoliaElement *e,
+					       int& sentence_done ){
+    ///
+    /// input is a FoLiA element @e containing text.
+    /// this can be a Word, Sentence, Paragraph or some other element
+    /// In the latter case, we construct a Sentene from the text, and
+    /// a Paragraph is more then one Sentence is found
+    ///
+    if ( e->xmltag() == "w" ){
+      // SKIP! already tokenized into words!
+    }
+    else if ( e->xmltag() == "s" ){
+      // OK a text in a sentence
+      if ( tokDebug > 2 ){
+	LOG << "found text in a sentence " << e << endl;
+      }
+      handle_one_sentence( dynamic_cast<folia::Sentence*>(e),
+			   ++sentence_done );
+    }
+    else if ( e->xmltag() == "p" ){
+      // OK a longer text in some paragraph
+      if ( tokDebug > 2 ){
+	LOG << "found text in a paragraph " << e << endl;
+      }
+      handle_one_paragraph( dynamic_cast<folia::Paragraph*>(e),
+			    sentence_done );
+    }
+    else {
+      // Some text outside word, paragraphs or sentences (yet)
+      // mabe <div> or <note> or such
+      // there may be Paragraph, Word and Sentence nodes
+      // if so, Paragraphs and Sentences should be handled separately
+      vector<folia::Word*> wv = e->select<folia::Word>(false);
+      vector<folia::Sentence*> sv = e->select<folia::Sentence>(false);
+      vector<folia::Paragraph*> pv = e->select<folia::Paragraph>(false);
+      if ( tokDebug > 1 ){
+	LOG << "found some Words " << wv << endl;
+	LOG << "found some Sentences " << sv << endl;
+	LOG << "found some Paragraphs " << pv << endl;
+      }
+      if ( pv.empty() && sv.empty() ){
+	// just words or text
+	string text = e->str(inputclass);
+	if ( tokDebug > 1 ){
+	  LOG << "frog-" << e->xmltag() << ":" << text << endl;
+	}
+	tokenizeLine( text );
+	vector<vector<Token>> sents;
+	vector<Token> toks = popSentence();
+	while ( toks.size() > 0 ){
+	  sents.push_back( toks );
+	  toks = popSentence();
+	}
+	if ( sents.size() > 1 ){
+	  // multiple sentences. We need an extra Paragraph.
+	  folia::KWargs args;
+	  string e_id = e->id();
+	  if ( !e_id.empty() ){
+	    args["generate_id"] = e_id;
+	  }
+	  folia::Paragraph *p = new folia::Paragraph( args, e->doc() );
+	  e->append( p );
+	  for ( const auto& sent : sents ){
+	    folia::KWargs args;
+	    string p_id = p->id();
+	    if ( !p_id.empty() ){
+	      args["generate_id"] = p_id;
+	    }
+	    folia::Sentence *s = new folia::Sentence( args, e->doc() );
+	    append_to_sentence( s, sent );
+	    if  (tokDebug > 0){
+	      LOG << "created a new sentence: " << s << endl;
+	    }
+	    p->append( s );
+	  }
+	}
+	else {
+	  // 1 sentence, connect directly.
+	  folia::KWargs args;
+	  string e_id = e->id();
+	  if ( e_id.empty() ){
+	    e_id = e->generateId( e->xmltag() );
+	    args["xml:id"] = e_id + ".s.1";
+	  }
+	  else {
+	    args["generate_id"] = e_id;
+	  }
+	  folia::Sentence *s = new folia::Sentence( args, e->doc() );
+	  append_to_sentence( s, sents[0] );
+	  if  (tokDebug > 0){
+	    LOG << "created a new sentence: " << s << endl;
+	  }
+	  e->append( s );
+	}
+      }
+      else if ( !pv.empty() ){
+	// For now we only handle the Paragraphs, ignore sentences and words
+	for ( const auto& p : pv ){
+	  handle_one_paragraph( p, sentence_done );
+	}
+      }
+      else {
+	// For now we just IGNORE the loose words (backward compatability)
+	for ( const auto& s : sv ){
+	  handle_one_sentence( s, sentence_done );
+	}
+      }
+    }
+  }
+
+  void TokenizerClass::tokenize_folia( const string& infilename,
+				       const string& xmlOutFile ){
+    if ( tokDebug > 0 ){
+      LOG << "[tokenize_folia} " << infilename << "," << xmlOutFile << ")" << endl;
+    }
+    folia::TextProcessor proc( infilename );
+    if ( passthru ){
+      proc.declare( folia::AnnotationType::TOKEN, "passthru",
+		    "annotator='ucto', annotatortype='auto', datetime='now()'" );
+    }
+    else {
+      if ( !proc.is_declared( folia::AnnotationType::LANG ) ){
+	proc.declare( folia::AnnotationType::LANG,
+		      ISO_SET, "annotator='ucto'" );
+      }
+      proc.set_metadata( "language", default_language );
+      proc.declare( folia::AnnotationType::TOKEN,
+		    "tokconfig-nld",
+		    "annotator='ucto', annotatortype='auto', datetime='now()'");
+    }
+    if  ( tokDebug > 8){
+      proc.set_dbg_stream( theErrLog );
+      proc.set_debug( true );
+    }
+    //  proc.set_debug( true );
+    proc.setup( inputclass, true );
+    int sentence_done = 0;
+    folia::FoliaElement *p = 0;
+    while ( (p = proc.next_text_parent() ) ){
+      //    LOG << "next text parent: " << p << endl;
+      handle_one_text_parent( p, sentence_done );
+      if ( tokDebug > 0 ){
+	LOG << "done with sentence " << sentence_done << endl;
+      }
+      if ( proc.next() ){
+	if ( tokDebug > 1 ){
+	  LOG << "looping for more ..." << endl;
+	}
+      }
+    }
+    if ( sentence_done == 0 ){
+      LOG << "document contains no text in the desired inputclass: "
+	  << inputclass << endl;
+      LOG << "NO result!" << endl;
+      return;
+    }
+    proc.save( xmlOutFile, false );
+    LOG << "resulting FoLiA doc saved in " << xmlOutFile << endl;
+  }
+
+
   void TokenizerClass::outputTokens( ostream& OUT,
 				     const vector<Token>& tokens,
 				     const bool continued ) const {
