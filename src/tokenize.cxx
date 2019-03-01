@@ -1193,6 +1193,7 @@ namespace Tokenizer {
 	folia::Sentence *s = new folia::Sentence( args, p->doc() );
 	p->append( s );
 	append_to_sentence( s, toks );
+	++sentence_done;
 	toks = popSentence();
       }
     }
