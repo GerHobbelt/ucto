@@ -385,53 +385,6 @@ namespace Tokenizer {
     return result;
   }
 
-#ifdef WEG
-  vector<Token> TokenizerClass::tokenize_line( const string& line ){
-    // tokenize a line of input into a token vector
-    // consumes the WHOLE line
-    if ( tokDebug > 0 ) {
-      LOG << "[tokenize_line] Read input line '"
-	  << TiCC::format_nonascii( line ) << "'" << endl;
-    }
-    UnicodeString input_line;
-    if ( !line.empty() ){
-      input_line = convert( line, inputEncoding );
-      if ( sentenceperlineinput ){
-	input_line += " " + eosmark;
-      }
-    }
-    else {
-      if ( sentenceperlineinput ){
-	input_line = eosmark;
-      }
-    }
-    bool bos = true;
-    tokenize_one_line( input_line, bos );
-    int numS = countSentences(true); //count all sentences in token buffer
-    if ( numS > 0 ) {
-      // 1 or more sentences in the buffer.
-      if  (tokDebug > 0) {
-	LOG << "[tokenize_line] " << numS
-	    << " sentence(s) in buffer, gathering all..." << endl;
-      }
-      vector<Token> outputTokens;
-      for ( int i=0; i < numS; ++i ){
-	vector<Token> tokens = popSentence();
-	outputTokens.insert( outputTokens.end(), tokens.begin(), tokens.end() );
-      }
-      // extract the first 1
-      return outputTokens;
-    }
-    else {
-      if  (tokDebug > 0) {
-	LOG << "[tokenize_line] nothing found" << endl;
-      }
-      vector<Token> result;
-      return result;
-    }
-  }
-#endif
-
   folia::Document *TokenizerClass::tokenize( istream& IN ) {
     inputEncoding = checkBOM( IN );
     folia::Document *doc = new folia::Document( "_id='" + docid + "'" );
@@ -1207,10 +1160,10 @@ namespace Tokenizer {
       vector<Token> sent = popSentence();
       while ( sent.size() > 0 ){
 	append_to_sentence( s, sent );
+	++sentence_done;
 	sent = popSentence();
       }
     }
-    ++sentence_done;
   }
 
   void TokenizerClass::handle_one_paragraph( folia::Paragraph *p,
@@ -1254,10 +1207,10 @@ namespace Tokenizer {
   void TokenizerClass::handle_one_text_parent( folia::FoliaElement *e,
 					       int& sentence_done ){
     ///
-    /// input is a FoLiA element @e containing text.
+    /// input is a FoLiA element @e containing text, direct or deeper
     /// this can be a Word, Sentence, Paragraph or some other element
     /// In the latter case, we construct a Sentene from the text, and
-    /// a Paragraph is more then one Sentence is found
+    /// a Paragraph if more then one Sentence is found
     ///
     if ( e->xmltag() == "w" ){
       // SKIP! already tokenized into words!
@@ -1271,7 +1224,7 @@ namespace Tokenizer {
 			   ++sentence_done );
     }
     else if ( e->xmltag() == "p" ){
-      // OK a longer text in some paragraph
+      // OK a longer text in some paragraph, maybe more sentences
       if ( tokDebug > 2 ){
 	LOG << "found text in a paragraph " << e << endl;
       }
@@ -1321,6 +1274,7 @@ namespace Tokenizer {
 	    }
 	    folia::Sentence *s = new folia::Sentence( args, e->doc() );
 	    append_to_sentence( s, sent );
+	    ++sentence_done;
 	    if  (tokDebug > 0){
 	      LOG << "created a new sentence: " << s << endl;
 	    }
@@ -1340,6 +1294,7 @@ namespace Tokenizer {
 	  }
 	  folia::Sentence *s = new folia::Sentence( args, e->doc() );
 	  append_to_sentence( s, sents[0] );
+	  ++sentence_done;
 	  if  (tokDebug > 0){
 	    LOG << "created a new sentence: " << s << endl;
 	  }
@@ -1348,6 +1303,7 @@ namespace Tokenizer {
       }
       else if ( !pv.empty() ){
 	// For now we only handle the Paragraphs, ignore sentences and words
+	// IS this even valid???
 	for ( const auto& p : pv ){
 	  handle_one_paragraph( p, sentence_done );
 	}
@@ -1366,6 +1322,12 @@ namespace Tokenizer {
     if ( tokDebug > 0 ){
       LOG << "[tokenize_folia} " << infilename << "," << xmlOutFile << ")" << endl;
     }
+    if ( inputclass == outputclass ){
+      LOG << "ucto: --filter=NO is automatically set. inputclass equals outputclass!"
+	  << endl;
+      setFiltering(false);
+    }
+
     folia::TextProcessor proc( infilename );
     if ( passthru ){
       proc.declare( folia::AnnotationType::TOKEN, "passthru",
@@ -1385,7 +1347,7 @@ namespace Tokenizer {
       proc.set_dbg_stream( theErrLog );
       proc.set_debug( true );
     }
-    //  proc.set_debug( true );
+    //    proc.set_debug( true );
     proc.setup( inputclass, true );
     int sentence_done = 0;
     folia::FoliaElement *p = 0;

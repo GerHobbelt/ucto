@@ -487,13 +487,15 @@ int main( int argc, char *argv[] ){
     tokenizer.setTextRedundancy(redundancy);
 
     if (xmlin) {
-      // string ofile2 = ofile + ".extra";
-      // tokenizer.tokenize_folia( ifile, ofile2 );
-      // cerr << "extra output " << ofile2 << endl;
-      folia::Document doc;
-      doc.readFromFile(ifile);
-      tokenizer.tokenize(doc);
-      *OUT << doc << endl;
+      // if ( !ofile.empty() ){
+      // 	tokenizer.tokenize_folia( ifile, ofile );
+      // }
+      // else {
+	folia::Document doc;
+	doc.readFromFile(ifile);
+	tokenizer.tokenize(doc);
+	*OUT << doc << endl;
+      // }
     }
     else {
       tokenizer.tokenize( *IN, *OUT );
