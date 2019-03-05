@@ -120,6 +120,7 @@ namespace Tokenizer {
     bool tokenize( folia::Document& );
 
     void tokenize_folia( const std::string&, const std::string&  );
+    folia::Document *tokenize_folia( const std::string& );
 
     // Tokenize from an input text stream to a token vector
     // (representing a sentence)

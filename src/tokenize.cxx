@@ -1075,11 +1075,24 @@ namespace Tokenizer {
       folia::Word *w;
 #pragma omp critical (foliaupdate)
       {
-	if ( tokDebug > 5 ){
-	  LOG << "create Word(" << args << ") = " << tok.us << endl;
+	UnicodeString ws = tok.us;
+	if (lowercase) {
+	  ws = ws.toLower();
 	}
-	w = new folia::Word( args, s->doc() );
-	w->setutext( tok.us, outputclass );
+	else if (uppercase) {
+	  ws = ws.toUpper();
+	}
+	if ( tokDebug > 5 ){
+	  LOG << "create Word(" << args << ") = " << ws << endl;
+	}
+	try {
+	  w = new folia::Word( args, s->doc() );
+	}
+	catch ( const exception& e ){
+	  cerr << "WHAT=" << e.what() << endl;
+	  exit(EXIT_FAILURE);
+	}
+	w->setutext( ws, outputclass );
 	if ( tokDebug > 5 ){
 	  LOG << "add_result, create a word, done:" << w << endl;
 	}
@@ -1088,61 +1101,73 @@ namespace Tokenizer {
       wv.push_back( w );
     }
     if ( text_redundancy == "full" ){
-      s->settext( s->str(outputclass), outputclass );
+      appendText( s, outputclass );
+    }
+    else if ( text_redundancy == "none" ){
+      removeText( s, outputclass );
     }
     return wv;
   }
 
   void TokenizerClass::append_to_sentence( folia::Sentence *sent,
 					   const vector<Token>& toks ) const {
-    // add tokenization, when applicable
-    string tok_set;
-    if ( toks[0].lang_code != "default" ){
-      tok_set = "tokconfig-" + toks[0].lang_code;
-    }
-    else {
-      tok_set = "tokconfig-nld";
-    }
-    vector<folia::Word*> wv = add_words( sent, tok_set, toks );
-    string la;
+    string s_la;
     if ( sent->hasannotation<folia::LangAnnotation>() ){
-      la = sent->annotation<folia::LangAnnotation>()->cls();
+      s_la = sent->annotation<folia::LangAnnotation>()->cls();
     }
+    string tc_lc = toks[0].lang_code;
     if ( tokDebug > 1 ){
       LOG << "append_to_sentence()" << endl;
-      LOG << "fd.language = " << toks[0].lang_code << endl;
+      LOG << "language code= " << tc_lc << endl;
       LOG << "default language = " << default_language << endl;
-      LOG << "sentence language = " << la << endl;
+      LOG << "sentence language = " << s_la << endl;
     }
-    if ( !la.empty() && la != default_language
-	 && default_language != "none" ){
+    if ( ( !s_la.empty() && s_la != default_language
+	   && default_language != "none"
+	   && settings.find(s_la) == settings.end() )
+	 || ( tc_lc != default_language
+	      && default_language != "none"
+	      && settings.find(tc_lc) == settings.end() ) ){
       // skip
+      // if ( tc_lc != default_language ){
+      // 	set_language( sent, tc_lc );
+      // }
+      // cerr << "sla" << (settings.find(s_la) == settings.end() )<< endl;
+      // cerr << "tc_lc" << (settings.find(tc_lc) == settings.end()) << endl;
       if ( tokDebug > 0 ){
-	LOG << "append_to_sentence() SKIP a sentence: " << la << endl;
+	LOG << "append_to_sentence() SKIP a sentence: " << s_la << endl;
       }
     }
     else {
-      if ( default_language != "none"
-	   && toks[0].lang_code != "default"
-	   && toks[0].lang_code != default_language ){
-	if (!sent->doc()->isDeclared( folia::AnnotationType::LANG ) ){
-	  sent->doc()->declare( folia::AnnotationType::LANG,
-				ISO_SET, "annotator='ucto'" );
-	}
-	folia::KWargs args;
-	args["class"] = toks[0].lang_code;
-	string sett = sent->doc()->defaultset( folia::AnnotationType::LANG );
-	if ( !sett.empty() && sett != "default" ){
-	  args["set"] = sett;
-	}
-	folia::LangAnnotation *la = new folia::LangAnnotation( args, sent->doc() );
-	sent->append( la );
+      // add tokenization, when applicable
+      string tok_set;
+      if ( toks[0].lang_code != "default" ){
+	tok_set = "tokconfig-" + tc_lc;
       }
+      else {
+	tok_set = "tokconfig-" + default_language;
+      }
+      if ( !sent->doc()->isDeclared( folia::AnnotationType::LANG ) ){
+	sent->doc()->declare( folia::AnnotationType::LANG,
+			    ISO_SET, "annotator='ucto'" );
+      }
+      sent->doc()->declare( folia::AnnotationType::TOKEN,
+			    tok_set,
+			    "annotator='ucto', annotatortype='auto', datetime='now()'");
+      vector<folia::Word*> wv = add_words( sent, tok_set, toks );
     }
   }
 
   void TokenizerClass::handle_one_sentence( folia::Sentence *s,
 					    int& sentence_done ){
+    // check feasability
+    if ( inputclass != outputclass && outputclass == "current" ){
+      if ( s->hastext( outputclass ) ){
+	throw uLogicError( "cannot set text with class='current' on node "
+			   + s->id() +
+			   " because it already has text in that class." );
+      }
+    }
     vector<folia::Word*> wv;
     wv = s->words( inputclass );
     if ( wv.empty() ){
@@ -1163,6 +1188,12 @@ namespace Tokenizer {
 	++sentence_done;
 	sent = popSentence();
       }
+    }
+    if ( text_redundancy == "full" ){
+      appendText( s, outputclass );
+    }
+    else if ( text_redundancy == "none" ){
+      removeText( s, outputclass );
     }
   }
 
@@ -1213,6 +1244,13 @@ namespace Tokenizer {
     /// In the latter case, we construct a Sentene from the text, and
     /// a Paragraph if more then one Sentence is found
     ///
+    if ( inputclass != outputclass && outputclass == "current" ){
+      if ( e->hastext( outputclass ) ){
+	throw uLogicError( "cannot set text with class='current' on node "
+			   + e->id() +
+			   " because it already has text in that class." );
+      }
+    }
     if ( e->xmltag() == "w" ){
       // SKIP! already tokenized into words!
     }
@@ -1260,16 +1298,24 @@ namespace Tokenizer {
 	}
 	if ( sents.size() > 1 ){
 	  // multiple sentences. We need an extra Paragraph.
-	  folia::KWargs args;
-	  string e_id = e->id();
-	  if ( !e_id.empty() ){
-	    args["generate_id"] = e_id;
+	  // But first check if this is allowed!
+	  folia::FoliaElement *rt;
+	  if ( e->acceptable(folia::Paragraph_t) ){
+	    folia::KWargs args;
+	    string e_id = e->id();
+	    if ( !e_id.empty() ){
+	      args["generate_id"] = e_id;
+	    }
+	    folia::Paragraph *p = new folia::Paragraph( args, e->doc() );
+	    e->append( p );
+	    rt = p;
 	  }
-	  folia::Paragraph *p = new folia::Paragraph( args, e->doc() );
-	  e->append( p );
+	  else {
+	    rt = e;
+	  }
 	  for ( const auto& sent : sents ){
 	    folia::KWargs args;
-	    string p_id = p->id();
+	    string p_id = rt->id();
 	    if ( !p_id.empty() ){
 	      args["generate_id"] = p_id;
 	    }
@@ -1279,7 +1325,7 @@ namespace Tokenizer {
 	    if  (tokDebug > 0){
 	      LOG << "created a new sentence: " << s << endl;
 	    }
-	    p->append( s );
+	    rt->append( s );
 	  }
 	}
 	else {
@@ -1316,20 +1362,41 @@ namespace Tokenizer {
 	}
       }
     }
+    if ( text_redundancy == "full" ){
+      appendText( e, outputclass );
+    }
+    else if ( text_redundancy == "none" ){
+      removeText( e, outputclass );
+    }
   }
 
-  void TokenizerClass::tokenize_folia( const string& infilename,
-				       const string& xmlOutFile ){
+  void TokenizerClass::tokenize_folia( const string& infile_name,
+				       const string& outfile_name ){
     if ( tokDebug > 0 ){
-      LOG << "[tokenize_folia} " << infilename << "," << xmlOutFile << ")" << endl;
+      LOG << "[tokenize_folia] (" << infile_name << ","
+	  << outfile_name << ")" << endl;
     }
+    folia::Document *doc = tokenize_folia( infile_name );
+    if ( doc ){
+      doc->save( outfile_name, false );
+      if ( tokDebug > 0 ){
+	LOG << "resulting FoLiA doc saved in " << outfile_name << endl;
+      }
+    }
+    else {
+      if ( tokDebug > 0 ){
+	LOG << "NO FoLiA doc created! " << endl;
+      }
+    }
+  }
+
+  folia::Document *TokenizerClass::tokenize_folia( const string& infile_name ){
     if ( inputclass == outputclass ){
       LOG << "ucto: --filter=NO is automatically set. inputclass equals outputclass!"
 	  << endl;
       setFiltering(false);
     }
-
-    folia::TextProcessor proc( infilename );
+    folia::TextProcessor proc( infile_name );
     if ( passthru ){
       proc.declare( folia::AnnotationType::TOKEN, "passthru",
 		    "annotator='ucto', annotatortype='auto', datetime='now()'" );
@@ -1339,7 +1406,13 @@ namespace Tokenizer {
 	proc.declare( folia::AnnotationType::LANG,
 		      ISO_SET, "annotator='ucto'" );
       }
-      proc.set_metadata( "language", default_language );
+      if ( proc.doc()->metadatatype() == "native" ){
+	proc.set_metadata( "language", default_language );
+      }
+      else {
+	LOG << "[WARNING] cannot set meta data language on FoLiA documents of type: "
+	    << proc.doc()->metadatatype() << endl;
+      }
       proc.declare( folia::AnnotationType::TOKEN,
 		    "tokconfig-nld",
 		    "annotator='ucto', annotatortype='auto', datetime='now()'");
@@ -1368,10 +1441,9 @@ namespace Tokenizer {
       LOG << "document contains no text in the desired inputclass: "
 	  << inputclass << endl;
       LOG << "NO result!" << endl;
-      return;
+      return 0;
     }
-    proc.save( xmlOutFile, false );
-    LOG << "resulting FoLiA doc saved in " << xmlOutFile << endl;
+    return proc.doc(true); // take the doc over from the processor
   }
 
 

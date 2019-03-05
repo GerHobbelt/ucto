@@ -491,10 +491,10 @@ int main( int argc, char *argv[] ){
        	tokenizer.tokenize_folia( ifile, ofile );
       }
       else {
-	folia::Document doc;
-	doc.readFromFile(ifile);
-	tokenizer.tokenize(doc);
-	*OUT << doc << endl;
+	folia::Document *doc = tokenizer.tokenize_folia( ifile );
+	if ( doc ){
+	  *OUT << doc << endl;
+	}
       }
     }
     else {
