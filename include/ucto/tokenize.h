@@ -113,14 +113,17 @@ namespace Tokenizer {
     bool reset( const std::string& = "default" );
     void setErrorLog( TiCC::LogStream *os );
 
-    // Tokenize from input stream with text to a FoLiA document
-    folia::Document *tokenize( std::istream& );
-
     // Tokenize a folia document
     bool tokenize( folia::Document& );
 
-    void tokenize_folia( const std::string&, const std::string&  );
+    // Tokenize from input stream with text OR FoLiA to a FoLiA document
     folia::Document *tokenize_folia( const std::string& );
+    // Tokenize from input stream with text to a FoLiA document (
+    folia::Document *tokenize( std::istream& );
+
+    // Tokenize from input stream with text OR FoLiA to a FoLiA document and
+    //   save it
+    void tokenize_folia( const std::string&, const std::string&  );
 
     // Tokenize from an input text stream to a token vector
     // (representing a sentence)
