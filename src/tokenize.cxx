@@ -422,7 +422,7 @@ namespace Tokenizer {
     return doc;
   }
 
-  void TokenizerClass::tokenize( const string& ifile, const string& ofile) {
+  void TokenizerClass::tokenize( const string& ifile, const string& ofile ){
     ostream *OUT = NULL;
     if ( ofile.empty() )
       OUT = &cout;
@@ -431,7 +431,12 @@ namespace Tokenizer {
     }
 
     istream *IN = NULL;
-    if (!xmlin) {
+    if ( xmlin ){
+      folia::Document *doc = tokenize_folia( ifile );
+      *OUT << *doc << endl;
+      delete doc;
+    }
+    else {
       if ( ifile.empty() )
 	IN = &cin;
       else {
@@ -444,18 +449,6 @@ namespace Tokenizer {
       }
       this->tokenize( *IN, *OUT );
     }
-    else {
-      folia::Document doc;
-      doc.readFromFile(ifile);
-      if ( xmlin && inputclass == outputclass ){
-	LOG << "ucto: --filter=NO is automatically set. inputclass equals outputclass!"
-	    << endl;
-	setFiltering(false);
-      }
-      this->tokenize(doc);
-      *OUT << doc << endl;
-    }
-
     if ( IN != &cin ) delete IN;
     if ( OUT != &cout ) delete OUT;
   }
@@ -521,45 +514,6 @@ namespace Tokenizer {
       }
       OUT << endl;
     }
-  }
-
-  bool TokenizerClass::tokenize( folia::Document& doc ) {
-    xmlin = true; // tautology
-    if ( tokDebug >= 2 ){
-      LOG << "tokenize doc " << doc << endl;
-    }
-    if ( inputclass == outputclass ){
-      LOG << "ucto: --filter=NO is automatically set. inputclass equals outputclass!"
-	  << endl;
-      setFiltering(false);
-    }
-    if ( true /*doDetectLang*/ ){
-      string lan = doc.doc()->language();
-      if ( lan.empty() && default_language != "none" ){
-	if ( tokDebug > 1 ){
-	  LOG << "[tokenize](FoLiA) SET document language=" << default_language << endl;
-	}
-	if ( doc.metadatatype() == "native" ){
-	  doc.set_metadata( "language", default_language );
-	}
-	else {
-	  LOG << "[WARNING] cannot set the language on FoLiA documents of type "
-	      << doc.metadatatype() << endl;
-	}
-      }
-      else {
-	if ( tokDebug >= 2 ){
-	  LOG << "[tokenize](FoLiA) Document has language " << lan << endl;
-	}
-      }
-    }
-    for ( size_t i = 0; i < doc.doc()->size(); i++) {
-      if (tokDebug >= 2) {
-	LOG << "[tokenize] Invoking processing of first-level element " << doc.doc()->index(i)->id() << endl;
-      }
-      tokenizeElement( doc.doc()->index(i) );
-    }
-    return true;
   }
 
   void appendText( folia::FoliaElement *root,
@@ -705,7 +659,7 @@ namespace Tokenizer {
 	}
       }
       else {
-	lan = element->language(); // remember thus recurses upward
+	lan = element->language(); // remember this recurses upward
 	// to get a language from the node, it's parents OR the doc
 	if ( lan.empty() || default_language == "none" ){
 	  lan = "default";
@@ -1116,7 +1070,7 @@ namespace Tokenizer {
       s_la = sent->annotation<folia::LangAnnotation>()->cls();
     }
     string tc_lc = toks[0].lang_code;
-    if ( tokDebug > 1 ){
+    if ( tokDebug >= 0 ){
       LOG << "append_to_sentence()" << endl;
       LOG << "language code= " << tc_lc << endl;
       LOG << "default language = " << default_language << endl;
@@ -1144,16 +1098,18 @@ namespace Tokenizer {
       if ( toks[0].lang_code != "default" ){
 	tok_set = "tokconfig-" + tc_lc;
       }
-      else {
+      else if (default_language != "none" ) {
 	tok_set = "tokconfig-" + default_language;
       }
       if ( !sent->doc()->isDeclared( folia::AnnotationType::LANG ) ){
 	sent->doc()->declare( folia::AnnotationType::LANG,
 			    ISO_SET, "annotator='ucto'" );
       }
-      sent->doc()->declare( folia::AnnotationType::TOKEN,
-			    tok_set,
-			    "annotator='ucto', annotatortype='auto', datetime='now()'");
+      if ( !tok_set.empty() ){
+	sent->doc()->declare( folia::AnnotationType::TOKEN,
+			      tok_set,
+			      "annotator='ucto', annotatortype='auto', datetime='now()'");
+      }
       vector<folia::Word*> wv = add_words( sent, tok_set, toks );
     }
   }
@@ -1406,7 +1362,8 @@ namespace Tokenizer {
 	proc.declare( folia::AnnotationType::LANG,
 		      ISO_SET, "annotator='ucto'" );
       }
-      if ( proc.doc()->metadatatype() == "native" ){
+      if ( proc.doc()->metadatatype() == "native"
+	   && default_language != "none" ){
 	proc.set_metadata( "language", default_language );
       }
       else {
