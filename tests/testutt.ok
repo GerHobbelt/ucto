@@ -5,7 +5,7 @@
       <division-annotation annotator="ucto" annotatortype="auto" set="div"/>
       <event-annotation annotator="ucto" annotatortype="auto" set="event"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-05T11:33:17" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-11T10:04:49" set="tokconfig-nld"/>
     </annotations>
     <meta id="language">nld</meta>
   </metadata>
@@ -228,7 +228,6 @@
   </text>
 </FoLiA>
 
-
 <?xml version="1.0" encoding="UTF-8"?>
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="WR-P-E-J-0000000001" generator="libfolia-v1.16" version="0.8">
   <metadata type="native">
@@ -236,7 +235,7 @@
       <division-annotation annotator="ucto" annotatortype="auto" set="div"/>
       <event-annotation annotator="ucto" annotatortype="auto" set="event"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-05T11:33:17" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-11T10:04:49" set="tokconfig-nld"/>
     </annotations>
     <meta id="language">nld</meta>
   </metadata>
@@ -302,5 +301,4 @@
     </event>
   </text>
 </FoLiA>
-
 

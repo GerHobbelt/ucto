@@ -3,7 +3,8 @@
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="test" generator="libfolia-v1.16" version="1.5">
   <metadata type="native">
     <annotations>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-02-05T15:28:58" set="tokconfig-nld"/>
+      <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-11T10:07:20" set="tokconfig-nld"/>
     </annotations>
     <meta id="language">nld</meta>
   </metadata>
@@ -24,5 +25,4 @@
     </div>
   </text>
 </FoLiA>
-
 

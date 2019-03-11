@@ -36,7 +36,6 @@
     </div>
   </text>
 </FoLiA>
-
 <?xml version="1.0" encoding="UTF-8"?>
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="bug" generator="libfolia-v1.16" version="1.5">
   <metadata type="native">
@@ -63,7 +62,6 @@
     </div>
   </text>
 </FoLiA>
-
 <?xml version="1.0" encoding="UTF-8"?>
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="bug" generator="libfolia-v1.16" version="1.5">
   <metadata type="native">
@@ -104,4 +102,3 @@
     </div>
   </text>
 </FoLiA>
-
