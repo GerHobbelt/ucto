@@ -308,9 +308,7 @@ namespace Tokenizer {
     int outputTokensXML( folia::FoliaElement *,
 			 const std::vector<Token>& ,
 			 int = 0 ) const;
-    void tokenizeElement( folia::FoliaElement * );
-    void tokenizeSentenceElement( folia::FoliaElement *,
-				  const std::string& );
+
     TiCC::UnicodeNormalizer normalizer;
     std::string inputEncoding;
 
