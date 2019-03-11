@@ -487,14 +487,9 @@ int main( int argc, char *argv[] ){
     tokenizer.setTextRedundancy(redundancy);
 
     if (xmlin) {
-      if ( !ofile.empty() ){
-       	tokenizer.tokenize_folia( ifile, ofile );
-      }
-      else {
-	folia::Document *doc = tokenizer.tokenize_folia( ifile );
-	if ( doc ){
-	  *OUT << doc << endl;
-	}
+      folia::Document *doc = tokenizer.tokenize_folia( ifile );
+      if ( doc ){
+	*OUT << doc << endl;
       }
     }
     else {
