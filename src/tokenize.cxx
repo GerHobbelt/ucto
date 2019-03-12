@@ -510,7 +510,6 @@ namespace Tokenizer {
 	  data += line + " ";
 	}
 	if ( !data.empty() ){
-	  istringstream inputstream(data,istringstream::in);
 	  vector<Token> v = tokenizeOneSentence( IN );
 	  while( !v.empty() ){
 	    outputTokens( OUT, v , (i>0) );
@@ -563,20 +562,6 @@ namespace Tokenizer {
 		   const string& outputclass  ){
     // remove the textcontent in outputclass of root
     root->cleartextcontent( outputclass );
-  }
-
-  const string get_language( folia::FoliaElement *f ) {
-    // get the language of this element, if any, don't look up.
-    // we search in ALL possible sets!
-    string st = "";
-    std::set<folia::ElementType> exclude;
-    vector<folia::LangAnnotation*> v
-      = f->select<folia::LangAnnotation>( st, exclude, false );
-    string result;
-    if ( v.size() > 0 ){
-      result = v[0]->cls();
-    }
-    return result;
   }
 
   void set_language( folia::FoliaElement* e, const string& lan ){
