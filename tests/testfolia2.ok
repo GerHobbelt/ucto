@@ -3,7 +3,7 @@
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="folia2" generator="libfolia-v1.16" version="1.5.1">
   <metadata type="native">
     <annotations>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T14:33:04" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T16:09:52" set="tokconfig-nld"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
     </annotations>
     <meta id="language">nld</meta>
@@ -18,10 +18,12 @@
         <w xml:id="folia2.p.1.s.1.w.2" class="PUNCTUATION">
           <t>:</t>
         </w>
-        <w xml:id="folia2.p.1.s.1.w.3" class="PUNCTUATION" space="no">
-          <t>"</t>
-        </w>
         <quote xml:id="folia2.p.1.s.1.quote.1">
+          <s xml:id="folia2.p.1.s.1.s.1" auth="no">
+            <w xml:id="folia2.p.1.s.1.s.1.w.1" class="PUNCTUATION" space="no">
+              <t>"</t>
+            </w>
+          </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.1" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.1.w.1" class="WORD" space="no">
               <t>Ja</t>
@@ -261,10 +263,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.6" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.7" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.6.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.6.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.1" class="WORD">
                   <t>Hoezo</t>
@@ -278,11 +282,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.4" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.5" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.8" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.7" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.1" class="WORD">
@@ -294,10 +298,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.7.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.7.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.1" class="WORD" space="no">
                   <t>Ja</t>
@@ -323,11 +329,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.8" class="PUNCTUATION" space="no">
                   <t>.</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.9" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.8" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.8.w.1" class="WORD">
@@ -511,10 +517,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.13.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.13.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.1" class="WORD">
                   <t>Die</t>
@@ -528,11 +536,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.4" class="PUNCTUATION" space="no">
                   <t>.</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.5" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.14" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.14.w.1" class="WORD" space="no">
@@ -558,10 +566,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.5" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.6" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.15.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.15.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.1.w.1" class="WORD">
                   <t>Hoe</t>
@@ -595,11 +605,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.2.w.5" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.2.w.6" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.7" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.16" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.1" class="WORD">
@@ -611,10 +621,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.16.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.16.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.1" class="WORD" space="no">
                   <t>Nou</t>
@@ -673,11 +685,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.19" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.20" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.17" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.1" class="WORD-WITHSUFFIX">
@@ -689,11 +701,11 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.3" class="PUNCTUATION" space="no">
               <t>!</t>
             </w>
+            <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.4" class="PUNCTUATION">
+              <t>"</t>
+            </w>
           </s>
         </quote>
-        <w xml:id="folia2.p.1.s.1.w.4" class="PUNCTUATION">
-          <t>"</t>
-        </w>
       </s>
     </p>
   </text>
@@ -704,7 +716,7 @@
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="folia2" generator="libfolia-v1.16" version="1.5.1">
   <metadata type="native">
     <annotations>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T14:33:04" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T16:09:52" set="tokconfig-nld"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
     </annotations>
     <meta id="language">nld</meta>
@@ -719,10 +731,12 @@
         <w xml:id="folia2.p.1.s.1.w.2" class="PUNCTUATION">
           <t>:</t>
         </w>
-        <w xml:id="folia2.p.1.s.1.w.3" class="PUNCTUATION" space="no">
-          <t>"</t>
-        </w>
         <quote xml:id="folia2.p.1.s.1.quote.1">
+          <s xml:id="folia2.p.1.s.1.s.1" auth="no">
+            <w xml:id="folia2.p.1.s.1.s.1.w.1" class="PUNCTUATION" space="no">
+              <t>"</t>
+            </w>
+          </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.1" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.1.w.1" class="WORD" space="no">
               <t>Ja</t>
@@ -962,10 +976,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.6" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.7" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.6.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.6.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.1" class="WORD">
                   <t>Hoezo</t>
@@ -979,11 +995,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.4" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.6.quote.1.s.1.w.5" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.6.w.8" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.7" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.1" class="WORD">
@@ -995,10 +1011,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.7.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.7.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.1" class="WORD" space="no">
                   <t>Ja</t>
@@ -1024,11 +1042,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.8" class="PUNCTUATION" space="no">
                   <t>.</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.7.quote.1.s.1.w.9" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.7.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.8" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.8.w.1" class="WORD">
@@ -1212,10 +1230,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.13.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.13.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.1" class="WORD">
                   <t>Die</t>
@@ -1229,11 +1249,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.4" class="PUNCTUATION" space="no">
                   <t>.</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.13.quote.1.s.1.w.5" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.13.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.14" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.14.w.1" class="WORD" space="no">
@@ -1259,10 +1279,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.5" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.6" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.15.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.15.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.1.w.1" class="WORD">
                   <t>Hoe</t>
@@ -1296,11 +1318,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.2.w.5" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.15.quote.1.s.2.w.6" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.15.w.7" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.16" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.1" class="WORD">
@@ -1312,10 +1334,12 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.3" class="PUNCTUATION">
               <t>:</t>
             </w>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.4" class="PUNCTUATION" space="no">
-              <t>'</t>
-            </w>
             <quote xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1">
+              <s xml:id="folia2.p.1.s.1.quote.1.s.16.s.1" auth="no">
+                <w xml:id="folia2.p.1.s.1.quote.1.s.16.s.1.w.1" class="PUNCTUATION" space="no">
+                  <t>'</t>
+                </w>
+              </s>
               <s xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1" auth="no">
                 <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.1" class="WORD" space="no">
                   <t>Nou</t>
@@ -1374,11 +1398,11 @@
                 <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.19" class="PUNCTUATION" space="no">
                   <t>?</t>
                 </w>
+                <w xml:id="folia2.p.1.s.1.quote.1.s.16.quote.1.s.1.w.20" class="PUNCTUATION">
+                  <t>'</t>
+                </w>
               </s>
             </quote>
-            <w xml:id="folia2.p.1.s.1.quote.1.s.16.w.5" class="PUNCTUATION">
-              <t>'</t>
-            </w>
           </s>
           <s xml:id="folia2.p.1.s.1.quote.1.s.17" auth="no">
             <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.1" class="WORD-WITHSUFFIX">
@@ -1390,11 +1414,11 @@
             <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.3" class="PUNCTUATION" space="no">
               <t>!</t>
             </w>
+            <w xml:id="folia2.p.1.s.1.quote.1.s.17.w.4" class="PUNCTUATION">
+              <t>"</t>
+            </w>
           </s>
         </quote>
-        <w xml:id="folia2.p.1.s.1.w.4" class="PUNCTUATION">
-          <t>"</t>
-        </w>
       </s>
     </p>
   </text>

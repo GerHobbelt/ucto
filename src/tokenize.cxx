@@ -661,6 +661,7 @@ namespace Tokenizer {
     vector<folia::Word*> wv;
     folia::FoliaElement *root = s;
     folia::Document *doc = s->doc();
+    int quotelevel = 0;
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
     }
@@ -668,17 +669,44 @@ namespace Tokenizer {
       if ( tokDebug > 5 ){
 	LOG << "add_result\n" << tok << endl;
       }
-      if ( tok.role & ENDQUOTE ){
-	if ( tokDebug > 5 ){
-	  LOG << "[add_words] End of quote" << endl;
+      if ( tok.role & BEGINQUOTE ){
+	// implies BEGINOFSENTENCE
+	if  (tokDebug > 5 ) {
+	  LOG << "[add_words] Creating quote element" << endl;
 	}
-	root = root->parent();
+	folia::KWargs args;
+	string id = get_parent_id(root);
+	if ( !id.empty() ){
+	  args["generate_id"] = id;
+	}
+	folia::FoliaElement *q = new folia::Quote( args, doc );
+	root->append( q );
+	folia::Sentence *s = new folia::Sentence( args, doc );
+	q->append( s );
+	root = s;
+	++quotelevel;
       }
-      if ( (tok.role & BEGINOFSENTENCE)
-	   && root != s ){
+      else if ( (tok.role & BEGINOFSENTENCE)
+		&& root != s && quotelevel == 0 ){
 	if ( tokDebug > 5 ){
 	  LOG << "[add_words] embedded sentence" << endl;
 	}
+	folia::KWargs args;
+	string id = root->id();
+	if ( !id.empty() ){
+	  args["generate_id"] = id;
+	}
+	folia::Sentence *ns = new folia::Sentence( args, doc );
+	root->append( ns );
+	root = ns;
+      }
+      if ( (tok.role & BEGINOFSENTENCE)
+	   && root != s
+	   && root->element_id() == folia::Sentence_t ){
+	if ( tokDebug > 5 ){
+	  LOG << "[add_words] embedded sentence" << endl;
+	}
+	root = root->parent();
 	folia::KWargs args;
 	string id = root->id();
 	if ( !id.empty() ){
@@ -730,29 +758,23 @@ namespace Tokenizer {
 	root->append( w );
       }
       wv.push_back( w );
-      if ( tok.role & BEGINQUOTE ){
-	if  (tokDebug > 5 ) {
-	  LOG << "[add_words] Creating quote element" << endl;
-	}
-	folia::KWargs args;
-	string id = get_parent_id(root);
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
-	}
-	folia::FoliaElement *q = new folia::Quote( args, doc );
-	root->append( q );
-	root = q;
-      }
-      if ( (tok.role & ENDOFSENTENCE)
-	   && root != s ){
+      if ( tok.role & ENDQUOTE ){
 	if ( tokDebug > 5 ){
-	  LOG << "[add_words] end embedded sentence" << endl;
+	  LOG << "[add_words] End of quote" << endl;
 	}
-	root = root->parent();
-	if ( tokDebug > 5 ){
-	  LOG << "[add_words] new root= " << root << endl;
-	}
+	root = root->parent()->parent();
+	--quotelevel;
       }
+      // if ( (tok.role & ENDOFSENTENCE)
+      // 	   && root != s ){
+      // 	if ( tokDebug > 5 ){
+      // 	  LOG << "[add_words] end embedded sentence" << endl;
+      // 	}
+      // 	root = root->parent();
+      // 	if ( tokDebug > 5 ){
+      // 	  LOG << "[add_words] new root= " << root << endl;
+      // 	}
+      // }
     }
     if ( text_redundancy == "full" ){
       appendText( s, outputclass );
