@@ -300,7 +300,7 @@ namespace Tokenizer {
       doc->set_metadata( "language", default_language );
     }
     doc->addStyle( "text/xsl", "folia.xsl" );
-    if ( tokDebug < 10003 ){
+    if ( tokDebug > 3 ){
       LOG << "start document!!!" << endl;
     }
     if ( passthru ){
@@ -308,13 +308,13 @@ namespace Tokenizer {
     }
     else {
       for ( const auto& s : settings ){
-	if ( tokDebug < 10003 ){
+	if ( tokDebug > 3 ){
 	  LOG << "language: " << s.first << endl;
 	}
 	doc->declare( folia::AnnotationType::TOKEN,
 		      s.second->set_file,
 		      "annotator='ucto', annotatortype='auto', datetime='now()'");
-	if ( tokDebug < 10003 ){
+	if ( tokDebug > 3 ){
 	  LOG << "added token-annotation for: '"
 	      << s.second->set_file << "'" << endl;
 	}
@@ -605,20 +605,19 @@ namespace Tokenizer {
     if ( !root || !root->doc() ){
       throw logic_error( "missing root" );
     }
-    if  ( tokDebug < 10005 ){
+    if  ( tokDebug > 5 ){
       LOG << "append_to_folia, root = " << root << endl;
       LOG << "tokens=\n" << tv << endl;
     }
-    folia::FoliaElement *attach = root;
     folia::KWargs args;
     if ( (tv[0].role & NEWPARAGRAPH) ) {
-      if  ( tokDebug < 10005 ){
+      if  ( tokDebug > 5 ){
 	LOG << "append_to_folia, NEW paragraph " << endl;
       }
       args["xml:id"] = root->doc()->id() + ".p." + TiCC::toString(++p_count);
       folia::Paragraph *p = new folia::Paragraph( args, root->doc() );
       if ( root->element_id() == folia::Text_t ){
-	if  ( tokDebug < 10005 ){
+	if  ( tokDebug > 5 ){
 	  LOG << "append_to_folia, add paragraph to Text" << endl;
 	}
 	root->append( p );
@@ -628,19 +627,19 @@ namespace Tokenizer {
 	if ( text_redundancy == "full" ){
 	  root->settext( root->str(outputclass), outputclass);
 	}
-	if  ( tokDebug < 10005 ){
+	if  ( tokDebug > 5 ){
 	  LOG << "append_to_folia, add paragraph to parent of " << root << endl;
 	}
 	root = root->parent();
 	root->append( p );
       }
-      attach = p;
+      root = p;
     }
     args.clear();
-    args["generate_id"] = attach->id();
+    args["generate_id"] = root->id();
     folia::Sentence *s = new folia::Sentence( args, root->doc() );
-    attach->append( s );
-    if  ( tokDebug <  10005 ){
+    root->append( s );
+    if  ( tokDebug > 5 ){
       LOG << "append_to_folia, created Sentence" << s << endl;
     }
     string tok_set;
@@ -649,221 +648,11 @@ namespace Tokenizer {
       tok_set = "tokconfig-" + lang;
       set_language( s, lang );
     }
-    else {
-      tok_set = "tokconfig-nld";
+    else if ( default_language != "none" ){
+      tok_set = "tokconfig-" + default_language;
     }
     vector<folia::Word*> wv = add_words( s, tok_set, tv );
-    return attach;
-  }
-
-  int TokenizerClass::outputTokensXML( folia::FoliaElement *root,
-				       const vector<Token>& tv,
-				       int parCount ) const {
-    short quotelevel = 0;
-    folia::FoliaElement *lastS = root;
-    if  (tokDebug > 0) {
-      LOG << "[outputTokensXML] root=<" << root->classname()
-	  << "> id=" << root->id() << endl;
-    }
-    bool root_is_sentence = false;
-    bool root_is_structure_element = false;
-    if ( root->isinstance( folia::Sentence_t ) ){
-      root_is_sentence = true;
-    }
-    else if ( root->isinstance( folia::Paragraph_t ) //TODO: can't we do this smarter?
-	      || root->isinstance( folia::Head_t )
-	      || root->isinstance( folia::Note_t )
-	      || root->isinstance( folia::ListItem_t )
-	      || root->isinstance( folia::Part_t )
-	      || root->isinstance( folia::Utterance_t )
-	      || root->isinstance( folia::Caption_t )
-	      || root->isinstance( folia::Cell_t )
-	      || root->isinstance( folia::Event_t ) ){
-      root_is_structure_element = true;
-    }
-
-    bool in_paragraph = false;
-    for ( const auto& token : tv ) {
-      if ( ( !root_is_structure_element && !root_is_sentence ) //TODO: instead of !root_is_structurel check if is_structure and accepts paragraphs?
-	   &&
-	   ( (token.role & NEWPARAGRAPH) || !in_paragraph ) ) {
-	if ( tokDebug > 0 ) {
-	  LOG << "[outputTokensXML] Creating paragraph" << endl;
-	}
-	if ( in_paragraph ){
-	  if ( text_redundancy == "full" ){
-	    if ( tokDebug > 0 ) {
-	      LOG << "[outputTokensXML] Creating text on root: " << root->id() << endl;
-	    }
-	    appendText( root, outputclass );
-	  }
-	  else if ( text_redundancy == "none" ){
-	    if ( tokDebug > 0 ) {
-	      LOG << "[outputTokensXML] Removing text from root: " << root->id() << endl;
-	    }
-	    removeText( root, outputclass );
-	  }
-	  root = root->parent();
-	}
-	folia::KWargs args;
-	args["_id"] = root->doc()->id() + ".p." +  toString(++parCount);
-	folia::FoliaElement *p = new folia::Paragraph( args, root->doc() );
-	//	LOG << "created " << p << endl;
-	root->append( p );
-	root = p;
-	quotelevel = 0;
-      }
-      if ( token.role & ENDQUOTE) {
-	if ( tokDebug > 0 ){
-	  LOG << "[outputTokensXML] End of quote" << endl;
-	}
-	quotelevel--;
-	root = root->parent();
-	lastS = root;
-	if ( tokDebug > 0 ){
-	  LOG << "[outputTokensXML] back to " << root->classname() << endl;
-	}
-      }
-      if ( ( token.role & LINEBREAK) ){
-	if  (tokDebug > 0) {
-	  LOG << "[outputTokensXML] LINEBREAK!" << endl;
-	}
-	folia::FoliaElement *lb = new folia::Linebreak();
-	root->append( lb );
-	if  (tokDebug > 0){
-	  LOG << "[outputTokensXML] back to " << root->classname() << endl;
-	}
-      }
-      if ( ( token.role & BEGINOFSENTENCE)
-	   && !root_is_sentence
-	   && !root->isinstance( folia::Utterance_t ) ) {
-	folia::KWargs args;
-	string id = get_parent_id(root);
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
-	}
-	if ( tokDebug > 0 ) {
-	  LOG << "[outputTokensXML] Creating sentence in '"
-			  << args["generate_id"] << "'" << endl;
-	}
-	folia::FoliaElement *s = new folia::Sentence( args, root->doc() );
-	root->append( s );
-	string tok_lan = token.lang_code;
-	auto it = settings.find(tok_lan);
-	if ( it == settings.end() ){
-	  tok_lan = root->doc()->language();
-	}
-	if ( !tok_lan.empty() &&
-	     tok_lan != default_language
-	     && tok_lan != "default" ){
-	  if  (tokDebug > 0) {
-	    LOG << "[outputTokensXML] set language: " << tok_lan << endl;
-	  }
-	  s->doc()->declare( folia::AnnotationType::LANG,
-			     ISO_SET, "annotator='ucto'" );
-	  set_language( s, tok_lan );
-	}
-	root = s;
-	lastS = root;
-      }
-      if ( !(token.role & LINEBREAK) ){
-	if  (tokDebug > 0) {
-	  LOG << "[outputTokensXML] Creating word element for " << token.us << endl;
-	}
-	folia::KWargs args;
-
-	string id = get_parent_id( lastS );
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
-	}
-	args["class"] = TiCC::UnicodeToUTF8( token.type );
-	if ( passthru ){
-	  args["set"] = "passthru";
-	}
-	else {
-	  auto it = settings.find(token.lang_code);
-	  if ( it == settings.end() ){
-	    it = settings.find("default");
-	  }
-	  args["set"] = it->second->set_file;
-	}
-	if ( token.role & NOSPACE) {
-	  args["space"]= "no";
-	}
-	if ( outputclass != inputclass || outputclass != "current" ){
-	  args["textclass"] = outputclass;
-	}
-	folia::FoliaElement *w = new folia::Word( args, root->doc() );
-	root->append( w );
-	UnicodeString out = token.us;
-	if (lowercase) {
-	  out.toLower();
-	}
-	else if (uppercase) {
-	  out.toUpper();
-	}
-	w->settext( TiCC::UnicodeToUTF8( out ), outputclass );
-	if ( tokDebug > 1 ) {
-	  LOG << "created " << w << " text= " <<  token.us  << "(" << outputclass << ")" << endl;
-	}
-      }
-      if ( token.role & BEGINQUOTE) {
-	if  (tokDebug > 0) {
-	  LOG << "[outputTokensXML] Creating quote element" << endl;
-	}
-	folia::KWargs args;
-	string id = get_parent_id(root);
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
-	}
-	folia::FoliaElement *q = new folia::Quote( args, root->doc() );
-	//	LOG << "created " << q << endl;
-	root->append( q );
-	root = q;
-	quotelevel++;
-      }
-      if ( ( token.role & ENDOFSENTENCE )
-	   && !root_is_sentence
-	   && !root->isinstance(folia::Utterance_t) ) {
-	if  (tokDebug > 0) {
-	  LOG << "[outputTokensXML] End of sentence" << endl;
-	}
-	if ( text_redundancy == "full" ){
-	  appendText( root, outputclass );
-	}
-	else if ( text_redundancy == "none" ){
-	  removeText( root, outputclass );
-	}
-	if ( token.role & LINEBREAK ){
-	  folia::FoliaElement *lb = new folia::Linebreak();
-	  root->append( lb );
-	}
-	root = root->parent();
-	lastS = root;
-	if  (tokDebug > 0){
-	  LOG << "[outputTokensXML] back to " << root->classname() << endl;
-	}
-      }
-      in_paragraph = true;
-    }
-    if ( tv.size() > 0 ){
-      if ( text_redundancy == "full" ){
-	if ( tokDebug > 0 ) {
-	  LOG << "[outputTokensXML] Creating text on root: " << root->id() << endl;
-	}
-	appendText( root, outputclass );
-      }
-      else if ( text_redundancy == "none" ){
-	if ( tokDebug > 0 ) {
-	  LOG << "[outputTokensXML] Removing text from root: " << root->id() << endl;
-	}
-	removeText( root, outputclass );
-      }
-    }
-    if ( tokDebug > 0 ) {
-      LOG << "[outputTokensXML] Done. parCount= " << parCount << endl;
-    }
-    return parCount;
+    return root;
   }
 
   vector<folia::Word*> TokenizerClass::add_words( folia::Sentence* s,
@@ -872,7 +661,6 @@ namespace Tokenizer {
     vector<folia::Word*> wv;
     folia::FoliaElement *root = s;
     folia::Document *doc = s->doc();
-    int quotelevel = 0;
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
     }
@@ -881,15 +669,14 @@ namespace Tokenizer {
 	LOG << "add_result\n" << tok << endl;
       }
       if ( tok.role & ENDQUOTE ){
-	if ( tokDebug < 10005 ){
+	if ( tokDebug > 5 ){
 	  LOG << "[add_words] End of quote" << endl;
 	}
-	quotelevel--;
 	root = root->parent();
       }
       if ( (tok.role & BEGINOFSENTENCE)
 	   && root != s ){
-	if ( tokDebug < 10005 ){
+	if ( tokDebug > 5 ){
 	  LOG << "[add_words] embedded sentence" << endl;
 	}
 	folia::KWargs args;
@@ -944,7 +731,7 @@ namespace Tokenizer {
       }
       wv.push_back( w );
       if ( tok.role & BEGINQUOTE ){
-	if  (tokDebug < 10005 ) {
+	if  (tokDebug > 5 ) {
 	  LOG << "[add_words] Creating quote element" << endl;
 	}
 	folia::KWargs args;
@@ -955,15 +742,14 @@ namespace Tokenizer {
 	folia::FoliaElement *q = new folia::Quote( args, doc );
 	root->append( q );
 	root = q;
-	quotelevel++;
       }
       if ( (tok.role & ENDOFSENTENCE)
 	   && root != s ){
-	if ( tokDebug < 10005 ){
+	if ( tokDebug > 5 ){
 	  LOG << "[add_words] end embedded sentence" << endl;
 	}
 	root = root->parent();
-	if ( tokDebug < 10005 ){
+	if ( tokDebug > 5 ){
 	  LOG << "[add_words] new root= " << root << endl;
 	}
       }

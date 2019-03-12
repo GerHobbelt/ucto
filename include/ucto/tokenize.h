@@ -310,10 +310,6 @@ namespace Tokenizer {
     std::string checkBOM( std::istream& );
     void outputTokensDoc_init( folia::Document& ) const;
 
-    int outputTokensXML( folia::FoliaElement *,
-			 const std::vector<Token>& ,
-			 int = 0 ) const;
-
     TiCC::UnicodeNormalizer normalizer;
     std::string inputEncoding;
 
