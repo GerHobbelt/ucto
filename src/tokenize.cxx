@@ -433,7 +433,9 @@ namespace Tokenizer {
       }
       vector<Token> v = tokenizeOneSentence( IN );
       if ( !v.empty() ){
-	LOG << "[tokenize] sentence=" << v << endl;
+	if ( tokDebug > 1 ){
+	  LOG << "[tokenize] sentence=" << v << endl;
+	}
 	root = append_to_folia( root, v, parCount );
       }
     }
