@@ -681,30 +681,25 @@ namespace Tokenizer {
 	}
 	folia::FoliaElement *q = new folia::Quote( args, doc );
 	root->append( q );
-	folia::Sentence *s = new folia::Sentence( args, doc );
-	q->append( s );
-	root = s;
+	folia::Sentence *ns = new folia::Sentence( args, doc );
+	q->append( ns );
+	root = ns;
 	++quotelevel;
       }
       else if ( (tok.role & BEGINOFSENTENCE)
-		&& root != s && quotelevel == 0 ){
+		&& root != s
+		&& root->element_id() == folia::Sentence_t ){
+	// Ok, another Sentence in a quote
+	// close the current one, and start a new one.
 	if ( tokDebug > 5 ){
-	  LOG << "[add_words] embedded sentence" << endl;
+	  LOG << "[add_words] next embedded sentence" << endl;
 	}
-	folia::KWargs args;
-	string id = root->id();
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
+	// honour text_redundancy on the Sentence
+	if ( text_redundancy == "full" ){
+	  appendText( root, outputclass );
 	}
-	folia::Sentence *ns = new folia::Sentence( args, doc );
-	root->append( ns );
-	root = ns;
-      }
-      if ( (tok.role & BEGINOFSENTENCE)
-	   && root != s
-	   && root->element_id() == folia::Sentence_t ){
-	if ( tokDebug > 5 ){
-	  LOG << "[add_words] embedded sentence" << endl;
+	else if ( text_redundancy == "none" ){
+	  removeText( root, outputclass );
 	}
 	root = root->parent();
 	folia::KWargs args;
@@ -759,22 +754,20 @@ namespace Tokenizer {
       }
       wv.push_back( w );
       if ( tok.role & ENDQUOTE ){
+	// end of quote implies end of embedded Sentence
 	if ( tokDebug > 5 ){
 	  LOG << "[add_words] End of quote" << endl;
 	}
-	root = root->parent()->parent();
+	// honour text_redundancy on the Sentence
+	if ( text_redundancy == "full" ){
+	  appendText( root->parent(), outputclass );
+	}
+	else if ( text_redundancy == "none" ){
+	  removeText( root->parent(), outputclass );
+	}
+	root = root->parent()->parent(); // so close Sentence too
 	--quotelevel;
       }
-      // if ( (tok.role & ENDOFSENTENCE)
-      // 	   && root != s ){
-      // 	if ( tokDebug > 5 ){
-      // 	  LOG << "[add_words] end embedded sentence" << endl;
-      // 	}
-      // 	root = root->parent();
-      // 	if ( tokDebug > 5 ){
-      // 	  LOG << "[add_words] new root= " << root << endl;
-      // 	}
-      // }
     }
     if ( text_redundancy == "full" ){
       appendText( s, outputclass );
