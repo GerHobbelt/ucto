@@ -293,6 +293,42 @@ namespace Tokenizer {
     return line;
   }
 
+
+  folia::Document *TokenizerClass::start_document( const string& id ) const {
+    folia::Document *doc = new folia::Document( "xml:id='" + id + "'" );
+    if ( default_language != "none" ){
+      doc->set_metadata( "language", default_language );
+    }
+    doc->addStyle( "text/xsl", "folia.xsl" );
+    if ( tokDebug < 10003 ){
+      LOG << "start document!!!" << endl;
+    }
+    if ( passthru ){
+      doc->declare( folia::AnnotationType::TOKEN, "passthru", "annotator='ucto', annotatortype='auto', datetime='now()'" );
+    }
+    else {
+      for ( const auto& s : settings ){
+	if ( tokDebug < 10003 ){
+	  LOG << "language: " << s.first << endl;
+	}
+	doc->declare( folia::AnnotationType::TOKEN,
+		      s.second->set_file,
+		      "annotator='ucto', annotatortype='auto', datetime='now()'");
+	if ( tokDebug < 10003 ){
+	  LOG << "added token-annotation for: '"
+	      << s.second->set_file << "'" << endl;
+	}
+	doc->declare( folia::AnnotationType::LANG,
+		      ISO_SET, "annotator='ucto'" );
+      }
+    }
+    folia::KWargs args;
+    args["xml:id"] = doc->id() + ".text";
+    folia::Text *text = new folia::Text( args );
+    doc->setRoot( text );
+    return doc;
+  }
+
   void TokenizerClass::tokenize_one_line( const UnicodeString& input_line,
 					  bool& bos ){
     if ( passthru ){
@@ -387,14 +423,7 @@ namespace Tokenizer {
 
   folia::Document *TokenizerClass::tokenize( istream& IN ) {
     inputEncoding = checkBOM( IN );
-    folia::Document *doc = new folia::Document( "_id='" + docid + "'" );
-    if ( /*doDetectLang &&*/ default_language != "none" ){
-      if ( tokDebug > 0 ){
-	LOG << "[tokenize](stream): SET document language=" << default_language << endl;
-      }
-      doc->set_metadata( "language", default_language );
-    }
-    outputTokensDoc_init( *doc );
+    folia::Document *doc = start_document( docid );
     folia::FoliaElement *root = doc->doc()->index(0);
     int parCount = 0;
     vector<Token> buffer;
@@ -403,13 +432,9 @@ namespace Tokenizer {
 	LOG << "[tokenize] looping on stream" << endl;
       }
       vector<Token> v = tokenizeOneSentence( IN );
-      for ( auto const& token : v ) {
-	if ( token.role & NEWPARAGRAPH) {
-	  //process the buffer
-	  parCount = outputTokensXML( root, buffer, parCount );
-	  buffer.clear();
-	}
-	buffer.push_back( token );
+      if ( !v.empty() ){
+	LOG << "[tokenize] sentence=" << v << endl;
+	root = append_to_folia( root, v, parCount );
       }
     }
     while ( IN );
@@ -417,7 +442,7 @@ namespace Tokenizer {
       LOG << "[tokenize] end of stream reached" << endl;
     }
     if (!buffer.empty()){
-      outputTokensXML( root, buffer, parCount);
+      append_to_folia( root, buffer, parCount);
     }
     return doc;
   }
@@ -562,21 +587,6 @@ namespace Tokenizer {
     e->replace( node );
   }
 
-  void TokenizerClass::outputTokensDoc_init( folia::Document& doc ) const {
-    doc.addStyle( "text/xsl", "folia.xsl" );
-    if ( passthru ){
-      doc.declare( folia::AnnotationType::TOKEN, "passthru", "annotator='ucto', annotatortype='auto', datetime='now()'" );
-    }
-    else {
-      for ( const auto& s : settings ){
-	doc.declare( folia::AnnotationType::TOKEN, s.second->set_file,
-		     "annotator='ucto', annotatortype='auto', datetime='now()'");
-      }
-    }
-    folia::Text *text = new folia::Text( folia::getArgs("_id='" + docid + ".text'") );
-    doc.append( text );
-  }
-
   string get_parent_id( folia::FoliaElement *el ){
     if ( !el ){
       return "";
@@ -587,6 +597,63 @@ namespace Tokenizer {
     else {
       return get_parent_id( el->parent() );
     }
+  }
+
+  folia::FoliaElement *TokenizerClass::append_to_folia( folia::FoliaElement *root,
+							const vector<Token>& tv,
+							int& p_count ) const {
+    if ( !root || !root->doc() ){
+      throw logic_error( "missing root" );
+    }
+    if  ( tokDebug < 10005 ){
+      LOG << "append_to_folia, root = " << root << endl;
+      LOG << "tokens=\n" << tv << endl;
+    }
+    folia::FoliaElement *attach = root;
+    folia::KWargs args;
+    if ( (tv[0].role & NEWPARAGRAPH) ) {
+      if  ( tokDebug < 10005 ){
+	LOG << "append_to_folia, NEW paragraph " << endl;
+      }
+      args["xml:id"] = root->doc()->id() + ".p." + TiCC::toString(++p_count);
+      folia::Paragraph *p = new folia::Paragraph( args, root->doc() );
+      if ( root->element_id() == folia::Text_t ){
+	if  ( tokDebug < 10005 ){
+	  LOG << "append_to_folia, add paragraph to Text" << endl;
+	}
+	root->append( p );
+      }
+      else {
+	// root is a paragraph, which is done now.
+	if ( text_redundancy == "full" ){
+	  root->settext( root->str(outputclass), outputclass);
+	}
+	if  ( tokDebug < 10005 ){
+	  LOG << "append_to_folia, add paragraph to parent of " << root << endl;
+	}
+	root = root->parent();
+	root->append( p );
+      }
+      attach = p;
+    }
+    args.clear();
+    args["generate_id"] = attach->id();
+    folia::Sentence *s = new folia::Sentence( args, root->doc() );
+    attach->append( s );
+    if  ( tokDebug <  10005 ){
+      LOG << "append_to_folia, created Sentence" << s << endl;
+    }
+    string tok_set;
+    string lang = get_language( tv );
+    if ( lang != "default" ){
+      tok_set = "tokconfig-" + lang;
+      set_language( s, lang );
+    }
+    else {
+      tok_set = "tokconfig-nld";
+    }
+    vector<folia::Word*> wv = add_words( s, tok_set, tv );
+    return attach;
   }
 
   int TokenizerClass::outputTokensXML( folia::FoliaElement *root,
@@ -803,6 +870,8 @@ namespace Tokenizer {
 						  const string& tok_set,
 						  const vector<Token>& toks ) const{
     vector<folia::Word*> wv;
+    folia::FoliaElement *root = s;
+    int quotelevel = 0;
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
     }
@@ -810,8 +879,15 @@ namespace Tokenizer {
       if ( tokDebug > 5 ){
 	LOG << "add_result\n" << tok << endl;
       }
+      if ( tok.role & ENDQUOTE ){
+	if ( tokDebug < 10005 ){
+	  LOG << "[add_words] End of quote" << endl;
+	}
+	quotelevel--;
+	root = root->parent();
+      }
       folia::KWargs args;
-      string ids = get_parent_id( s );
+      string ids = get_parent_id( root );
       if ( !ids.empty() ){
 	args["generate_id"] = ids;
       }
@@ -849,9 +925,23 @@ namespace Tokenizer {
 	if ( tokDebug > 5 ){
 	  LOG << "add_result, create a word, done:" << w << endl;
 	}
-	s->append( w );
+	root->append( w );
       }
       wv.push_back( w );
+      if ( tok.role & BEGINQUOTE ){
+	if  (tokDebug < 10005 ) {
+	  LOG << "[add_words] Creating quote element" << endl;
+	}
+	folia::KWargs args;
+	string id = get_parent_id(root);
+	if ( !id.empty() ){
+	  args["generate_id"] = id;
+	}
+	folia::FoliaElement *q = new folia::Quote( args, root->doc() );
+	root->append( q );
+	root = q;
+	quotelevel++;
+      }
     }
     if ( text_redundancy == "full" ){
       appendText( s, outputclass );

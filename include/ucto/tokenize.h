@@ -264,6 +264,11 @@ namespace Tokenizer {
     void passthruLine( const UnicodeString&, bool& );
     void passthruLine( const std::string&, bool& );
 
+    folia::Document *start_document( const std::string& ) const;
+    folia::FoliaElement *append_to_folia( folia::FoliaElement *root,
+					  const std::vector<Token>& tv,
+					  int& p_count ) const;
+
     std::vector<folia::Word*> add_words( folia::Sentence*,
 					 const std::string& tok_set,
 					 const std::vector<Token>& toks ) const;
