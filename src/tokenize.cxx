@@ -871,6 +871,7 @@ namespace Tokenizer {
 						  const vector<Token>& toks ) const{
     vector<folia::Word*> wv;
     folia::FoliaElement *root = s;
+    folia::Document *doc = s->doc();
     int quotelevel = 0;
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
@@ -885,6 +886,20 @@ namespace Tokenizer {
 	}
 	quotelevel--;
 	root = root->parent();
+      }
+      if ( (tok.role & BEGINOFSENTENCE)
+	   && root != s ){
+	if ( tokDebug < 10005 ){
+	  LOG << "[add_words] embedded sentence" << endl;
+	}
+	folia::KWargs args;
+	string id = root->id();
+	if ( !id.empty() ){
+	  args["generate_id"] = id;
+	}
+	folia::Sentence *ns = new folia::Sentence( args, doc );
+	root->append( ns );
+	root = ns;
       }
       folia::KWargs args;
       string ids = get_parent_id( root );
@@ -915,7 +930,7 @@ namespace Tokenizer {
 	  LOG << "create Word(" << args << ") = " << ws << endl;
 	}
 	try {
-	  w = new folia::Word( args, s->doc() );
+	  w = new folia::Word( args, doc );
 	}
 	catch ( const exception& e ){
 	  cerr << "WHAT=" << e.what() << endl;
@@ -937,10 +952,20 @@ namespace Tokenizer {
 	if ( !id.empty() ){
 	  args["generate_id"] = id;
 	}
-	folia::FoliaElement *q = new folia::Quote( args, root->doc() );
+	folia::FoliaElement *q = new folia::Quote( args, doc );
 	root->append( q );
 	root = q;
 	quotelevel++;
+      }
+      if ( (tok.role & ENDOFSENTENCE)
+	   && root != s ){
+	if ( tokDebug < 10005 ){
+	  LOG << "[add_words] end embedded sentence" << endl;
+	}
+	root = root->parent();
+	if ( tokDebug < 10005 ){
+	  LOG << "[add_words] new root= " << root << endl;
+	}
       }
     }
     if ( text_redundancy == "full" ){

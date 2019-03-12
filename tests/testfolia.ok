@@ -3,7 +3,7 @@
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="foliatest" generator="libfolia-v1.16" version="1.5.1">
   <metadata type="native">
     <annotations>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T12:42:20" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T14:33:04" set="tokconfig-nld"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
     </annotations>
     <meta id="language">nld</meta>
@@ -11,6 +11,7 @@
   <text xml:id="foliatest.text">
     <p xml:id="foliatest.p.1">
       <s xml:id="foliatest.p.1.s.1">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.1.s.1.w.1" class="WORD">
           <t>Die</t>
         </w>
@@ -40,6 +41,7 @@
         </w>
       </s>
       <s xml:id="foliatest.p.1.s.2">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.1.s.2.w.1" class="WORD">
           <t>We</t>
         </w>
@@ -67,6 +69,7 @@
     </p>
     <p xml:id="foliatest.p.2">
       <s xml:id="foliatest.p.2.s.1">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.2.s.1.w.1" class="WORD">
           <t>De</t>
         </w>
@@ -125,7 +128,7 @@
 <FoLiA xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://ilk.uvt.nl/folia" xml:id="foliatest" generator="libfolia-v1.16" version="1.5.1">
   <metadata type="native">
     <annotations>
-      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T12:42:20" set="tokconfig-nld"/>
+      <token-annotation annotator="ucto" annotatortype="auto" datetime="2019-03-12T14:33:04" set="tokconfig-nld"/>
       <lang-annotation annotator="ucto" set="http://raw.github.com/proycon/folia/master/setdefinitions/iso639_3.foliaset"/>
     </annotations>
     <meta id="language">nld</meta>
@@ -133,6 +136,7 @@
   <text xml:id="foliatest.text">
     <p xml:id="foliatest.p.1">
       <s xml:id="foliatest.p.1.s.1">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.1.s.1.w.1" class="WORD">
           <t>Die</t>
         </w>
@@ -162,6 +166,7 @@
         </w>
       </s>
       <s xml:id="foliatest.p.1.s.2">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.1.s.2.w.1" class="WORD">
           <t>We</t>
         </w>
@@ -189,6 +194,7 @@
     </p>
     <p xml:id="foliatest.p.2">
       <s xml:id="foliatest.p.2.s.1">
+        <lang class="nld"/>
         <w xml:id="foliatest.p.2.s.1.w.1" class="WORD">
           <t>De</t>
         </w>
