@@ -648,7 +648,6 @@ namespace Tokenizer {
     vector<folia::Word*> wv;
     folia::FoliaElement *root = s;
     folia::Document *doc = s->doc();
-    int quotelevel = 0;
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
     }
@@ -658,7 +657,6 @@ namespace Tokenizer {
 	LOG << "add_result\n" << tok << endl;
       }
       if ( tok.role & BEGINQUOTE ){
-	// implies BEGINOFSENTENCE
 	if  (tokDebug > 5 ) {
 	  LOG << "[add_words] Creating quote element" << endl;
 	}
@@ -669,10 +667,16 @@ namespace Tokenizer {
 	}
 	folia::FoliaElement *q = new folia::Quote( args, doc );
 	root->append( q );
-	folia::Sentence *ns = new folia::Sentence( args, doc );
-	q->append( ns );
-	root = ns;
-	++quotelevel;
+	// might need a new Sentence
+	if ( i+1 < toks.size()
+	     && toks[i+1].role & BEGINOFSENTENCE ){
+	  folia::Sentence *ns = new folia::Sentence( args, doc );
+	  q->append( ns );
+	  root = ns;
+	}
+	else {
+	  root = q;
+	}
       }
       else if ( (tok.role & BEGINOFSENTENCE)
 		&& root != s
@@ -680,6 +684,7 @@ namespace Tokenizer {
 	// Ok, another Sentence in a quote
 	if ( i > 0 && !(toks[i-1].role & BEGINQUOTE) ){
 	// close the current one, and start a new one.
+	  // except when it is implicit created by a QUOTE
 	  if ( tokDebug > 5 ){
 	    LOG << "[add_words] next embedded sentence" << endl;
 	  }
@@ -744,19 +749,24 @@ namespace Tokenizer {
       }
       wv.push_back( w );
       if ( tok.role & ENDQUOTE ){
-	// end of quote implies end of embedded Sentence
-	if ( tokDebug > 5 ){
-	  LOG << "[add_words] End of quote" << endl;
+	if ( i > 0
+	     && toks[i-1].role & ENDOFSENTENCE ){
+	  // end of quote implies with embedded Sentence
+	  if ( tokDebug > 5 ){
+	    LOG << "[add_words] End of quote" << endl;
+	  }
+	  // honour text_redundancy on the Sentence
+	  if ( text_redundancy == "full" ){
+	    appendText( root->parent(), outputclass );
+	  }
+	  else if ( text_redundancy == "none" ){
+	    removeText( root->parent(), outputclass );
+	  }
+	  root = root->parent()->parent(); // so close Sentence too
 	}
-	// honour text_redundancy on the Sentence
-	if ( text_redundancy == "full" ){
-	  appendText( root->parent(), outputclass );
+	else {
+	  root = root->parent();
 	}
-	else if ( text_redundancy == "none" ){
-	  removeText( root->parent(), outputclass );
-	}
-	root = root->parent()->parent(); // so close Sentence too
-	--quotelevel;
       }
     }
     if ( text_redundancy == "full" ){
