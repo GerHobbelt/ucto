@@ -652,7 +652,8 @@ namespace Tokenizer {
     if ( tokDebug > 5 ){
       LOG << "add_words\n" << toks << endl;
     }
-    for ( const auto& tok : toks ){
+    for ( size_t i=0; i < toks.size(); ++i ){
+      const auto& tok = toks[i];
       if ( tokDebug > 5 ){
 	LOG << "add_result\n" << tok << endl;
       }
@@ -677,26 +678,28 @@ namespace Tokenizer {
 		&& root != s
 		&& root->element_id() == folia::Sentence_t ){
 	// Ok, another Sentence in a quote
+	if ( i > 0 && !(toks[i-1].role & BEGINQUOTE) ){
 	// close the current one, and start a new one.
-	if ( tokDebug > 5 ){
-	  LOG << "[add_words] next embedded sentence" << endl;
+	  if ( tokDebug > 5 ){
+	    LOG << "[add_words] next embedded sentence" << endl;
+	  }
+	  // honour text_redundancy on the Sentence
+	  if ( text_redundancy == "full" ){
+	    appendText( root, outputclass );
+	  }
+	  else if ( text_redundancy == "none" ){
+	    removeText( root, outputclass );
+	  }
+	  root = root->parent();
+	  folia::KWargs args;
+	  string id = root->id();
+	  if ( !id.empty() ){
+	    args["generate_id"] = id;
+	  }
+	  folia::Sentence *ns = new folia::Sentence( args, doc );
+	  root->append( ns );
+	  root = ns;
 	}
-	// honour text_redundancy on the Sentence
-	if ( text_redundancy == "full" ){
-	  appendText( root, outputclass );
-	}
-	else if ( text_redundancy == "none" ){
-	  removeText( root, outputclass );
-	}
-	root = root->parent();
-	folia::KWargs args;
-	string id = root->id();
-	if ( !id.empty() ){
-	  args["generate_id"] = id;
-	}
-	folia::Sentence *ns = new folia::Sentence( args, doc );
-	root->append( ns );
-	root = ns;
       }
       folia::KWargs args;
       string ids = get_parent_id( root );
