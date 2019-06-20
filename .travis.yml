@@ -5,7 +5,8 @@ group: edge
 # whitelist
 branches:
   only:
-    - master
+#    - master
+    - macbug
 
 notifications:
   irc:
@@ -19,23 +20,6 @@ notifications:
 language: cpp
 matrix:
   include:
-    - os: linux
-      dist: xenial
-      cache: ccache
-      compiler: gcc
-      env:
-        - COMPILER=g++
-        - SCAN=echo
-
-    - os: linux
-      dist: trusty
-      cache: ccache
-      compiler: clang
-      env:
-        - COMPILER=clang++
-        - SCAN=scan-build
-        - OPENMPFLAG=--disable-openmp
-
     - os: osx
       compiler: gcc
       cache:
