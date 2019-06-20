@@ -624,13 +624,24 @@ namespace Tokenizer {
       OUT = &cout;
     else {
       OUT = new ofstream( ofile );
+      if ( tokDebug > 1 ){
+	LOG << "[tokenize] opened outputfile: " << ofile << endl;
+      }
     }
 
     istream *IN = NULL;
     if ( xmlin ){
       folia::Document *doc = tokenize_folia( ifile );
-      *OUT << *doc;
-      delete doc;
+      if ( doc ){
+	if ( tokDebug > 1 ){
+	  LOG << "[tokenize] got a document " << ofile << endl;
+	}
+	*OUT << *doc;
+	delete doc;
+      }
+      else {
+	LOG << "[tokenize] No Document created!. Panic!" << endl;
+      }
     }
     else {
       if ( ifile.empty() )
@@ -1262,6 +1273,9 @@ namespace Tokenizer {
 	  << inputclass << endl;
       LOG << "NO result!" << endl;
       return 0;
+    }
+    if ( tokDebug > 0 ){
+      LOG << "created a FoLiA document. Passing it to our caller." << endl;
     }
     return proc.doc(true); // take the doc over from the Engine
   }
