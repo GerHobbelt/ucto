@@ -91,10 +91,8 @@ script:
 
 after_failure:
   - cat testoutput/testissue64.tmp
+  - cat testoutput/testissue64.err
   - cat testoutput/outa.xml
   - cat testoutput/outb.xml
-  - cat testoutput/testfoliain.tmp
   - cat testoutput/testnbsp.tmp
-  - tail -n 500 ../config.log
-  - tail -n 100 testoutput/*.diff
-  - tail -n 100 testoutput/*.err
+  - cat testoutput/testnbsp.err
