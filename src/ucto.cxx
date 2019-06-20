@@ -387,8 +387,8 @@ int main( int argc, char *argv[] ){
 	  }
 	  else {
 	    cerr << "ucto: Available Languages: ";
-	    for( const auto& l : available_languages ){
-	      cerr << l << ",";
+	    for( const auto& al : available_languages ){
+	      cerr << al << ",";
 	    }
 	    cerr << endl;
 	  }
@@ -495,7 +495,8 @@ int main( int argc, char *argv[] ){
       folia::Document *doc = tokenizer.tokenize_folia( ifile );
       cerr << "NA" << endl;
       if ( doc ){
-	doc->setdebug(10);
+	//	doc->setdebug(10);
+	*OUT << "WTF!" << endl;
 	*OUT << *doc;
 	delete doc;
       }

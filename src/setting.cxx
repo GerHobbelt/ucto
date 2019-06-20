@@ -510,7 +510,7 @@ namespace Tokenizer {
     }
   }
 
-  void split( const string& version, int& major, int& minor, string& sub ){
+  void version_split( const string& version, int& major, int& minor, string& sub ){
     vector<string> parts;
     size_t num = TiCC::split_at( version, parts, "." );
     major = 0;
@@ -652,8 +652,8 @@ namespace Tokenizer {
 				    set_file );
 	      }
 	      UnicodeString id = UnicodeString( line, 0,splitpoint);
-	      UnicodeString pattern = UnicodeString( line, splitpoint+1);
-	      rulesmap[id] = new Rule( id, pattern);
+	      UnicodeString newpat = UnicodeString( line, splitpoint+1);
+	      rulesmap[id] = new Rule( id, newpat );
 	    }
 	      break;
 	    case RULEORDER:
@@ -791,7 +791,7 @@ namespace Tokenizer {
 	bool skip_rule = false;
 	for ( const auto& part : parts ){
 	  UnicodeString meta = TiCC::UnicodeFromUTF8( part );
-	  ConfigMode mode = getMode( "[" + meta + "]" );
+	  ConfigMode part_mode = getMode( "[" + meta + "]" );
 	  switch ( mode ){
 	  case ORDINALS:
 	  case ABBREVIATIONS:
@@ -802,8 +802,8 @@ namespace Tokenizer {
 	  case CURRENCY:
 	  case PREFIXES:
 	  case SUFFIXES:
-	    if ( !pattern[mode].isEmpty()){
-	      new_parts.push_back( pattern[mode] );
+	    if ( !pattern[part_mode].isEmpty()){
+	      new_parts.push_back( pattern[part_mode] );
 	    }
 	    else {
 	      undef_parts.push_back( meta );
@@ -835,7 +835,7 @@ namespace Tokenizer {
     int minor = -1;
     string sub;
     if ( !version.empty() ){
-      split( version, major, minor, sub );
+      version_split( version, major, minor, sub );
       if ( tokDebug ){
 	LOG << set_file << ": version=" << version << endl;
       }

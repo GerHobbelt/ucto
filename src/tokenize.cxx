@@ -885,7 +885,6 @@ namespace Tokenizer {
       if ( !tok_set.empty() ){
       	args["set"] = tok_set;
       }
-      folia::Word *w;
 #pragma omp critical (foliaupdate)
       {
 	UnicodeString ws = tok.us;
@@ -898,6 +897,7 @@ namespace Tokenizer {
 	if ( tokDebug > 5 ){
 	  LOG << "create Word(" << args << ") = " << ws << endl;
 	}
+	folia::Word *w;
 	try {
 	  w = new folia::Word( args, doc );
 	}
@@ -1467,7 +1467,6 @@ namespace Tokenizer {
     if ( size != 0 ){
       short quotelevel = 0;
       size_t begin = 0;
-      size_t end = 0;
       for ( int i = 0; i < size; ++i ) {
 	if (tokens[i].role & NEWPARAGRAPH) {
 	  quotelevel = 0;
@@ -1485,13 +1484,13 @@ namespace Tokenizer {
 	}
 
 	if ((tokens[i].role & ENDOFSENTENCE) && (quotelevel == 0)) {
-	  end = i;
+	  size_t end = i;
 	  if (tokDebug >= 1){
 	    LOG << "[tokenize] extracted sentence, begin=" << begin
 		<< ",end="<< end << endl;
 	  }
-	  for ( size_t i=begin; i <= end; ++i ){
-	    outToks.push_back( tokens[i] );
+	  for ( size_t j=begin; j <= end; ++j ){
+	    outToks.push_back( tokens[j] );
 	  }
 	  tokens.erase( tokens.begin(), tokens.begin()+end+1 );
 	  if ( !passthru ){
@@ -1698,13 +1697,13 @@ namespace Tokenizer {
 	is_eos = true; //Newline after eosmarker
       }
       else {
-	UChar32 c = tokens[i+1].us.char32At(0);
+	c = tokens[i+1].us.char32At(0);
 	if ( u_isquote( c, quotes ) ){
 	  // next word is quote
 	  if ( detectQuotes )
 	    is_eos = true;
 	  else if ( i + 2 < tokens.size() ) {
-	    UChar32 c = tokens[i+2].us.char32At(0);
+	    c = tokens[i+2].us.char32At(0);
 	    if ( u_isupper(c) || u_istitle(c) || u_ispunct(c) ){
 	      //next 'word' after quote starts with uppercase or is punct
 	      is_eos = true;
