@@ -665,7 +665,7 @@ namespace Tokenizer {
       folia::Document *doc = tokenize( IN );
       if ( doc ){
 	if ( tokDebug > 1 ){
-	  LOG << "[tokenize(in,out)] got a document " << ofile << endl;
+	  LOG << "[tokenize(in,out)] got a document!" << endl;
 	}
 	OUT << doc;
 	delete doc;
