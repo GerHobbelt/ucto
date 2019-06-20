@@ -1,7 +1,8 @@
 #/bin/sh -x
 
-exe='../src/ucto -d5'
+exe='../src/ucto'
 
 \rm -f nbsp.out.xml
 $exe -d10 -Lnld nbsp.xml nbsp.out.xml
 cat < nbsp.out.xml
+cat < "bla"
