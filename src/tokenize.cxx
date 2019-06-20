@@ -634,13 +634,13 @@ namespace Tokenizer {
       folia::Document *doc = tokenize_folia( ifile );
       if ( doc ){
 	if ( tokDebug > 1 ){
-	  LOG << "[tokenize] got a document " << ofile << endl;
+	  LOG << "[tokenize(in)] got a document " << ofile << endl;
 	}
 	*OUT << *doc;
 	delete doc;
       }
       else {
-	LOG << "[tokenize] No Document created!. Panic!" << endl;
+	LOG << "[tokenize(in)] No Document created!. Panic!" << endl;
       }
     }
     else {
@@ -663,8 +663,16 @@ namespace Tokenizer {
   void TokenizerClass::tokenize( istream& IN, ostream& OUT) {
     if (xmlout) {
       folia::Document *doc = tokenize( IN );
-      OUT << doc;
-      delete doc;
+      if ( doc ){
+	if ( tokDebug > 1 ){
+	  LOG << "[tokenize(in,out)] got a document " << ofile << endl;
+	}
+	OUT << doc;
+	delete doc;
+      }
+      else {
+	LOG << "[tokenize(in,out)] No Document created!. Panic!" << endl;
+      }
     }
 #ifdef DO_READLINE
     else if ( &IN == &cin && isatty(0) ){
