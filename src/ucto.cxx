@@ -495,7 +495,7 @@ int main( int argc, char *argv[] ){
       folia::Document *doc = tokenizer.tokenize_folia( ifile );
       cerr << "NA" << endl;
       if ( doc ){
-	*OUT << doc;
+	*OUT << *doc;
 	delete doc;
       }
       else {
