@@ -491,10 +491,15 @@ int main( int argc, char *argv[] ){
     tokenizer.setTextRedundancy(redundancy);
 
     if (xmlin) {
+      cerr << "VOOR" << endl;
       folia::Document *doc = tokenizer.tokenize_folia( ifile );
+      cerr << "NA" << endl;
       if ( doc ){
 	*OUT << doc;
 	delete doc;
+      }
+      else {
+	cerr << "creating a FoliA document failed..... Sorry" << endl;
       }
     }
     else {

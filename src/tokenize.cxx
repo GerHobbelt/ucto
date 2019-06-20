@@ -631,7 +631,9 @@ namespace Tokenizer {
 
     istream *IN = NULL;
     if ( xmlin ){
+      LOG << "STEP ONE" << endl;
       folia::Document *doc = tokenize_folia( ifile );
+      LOG << "STEP TWO" << endl;
       if ( doc ){
 	if ( tokDebug > 1 ){
 	  LOG << "[tokenize(in)] got a document " << ofile << endl;
@@ -1294,7 +1296,9 @@ namespace Tokenizer {
       LOG << "[tokenize_folia] (" << infile_name << ","
 	  << outfile_name << ")" << endl;
     }
+    LOG << "STEP ONE ONE" << endl;
     folia::Document *doc = tokenize_folia( infile_name );
+    LOG << "STEP TWO TWO" << endl;
     if ( doc ){
       doc->save( outfile_name, false );
       if ( tokDebug > 0 ){
@@ -1302,9 +1306,7 @@ namespace Tokenizer {
       }
     }
     else {
-      if ( tokDebug > 0 ){
-	LOG << "NO FoLiA doc created! " << endl;
-      }
+      LOG << "NO FoLiA doc created! PANIC!" << endl;
     }
   }
 
