@@ -1,8 +1,4 @@
 #/bin/sh
-# $Id$
-# $URL$
-
-exe=../src/ucto
 
 $exe -L nl encoding2.nl
 $exe -L nl -e LATIN1 encoding2.nl
@@ -12,4 +8,4 @@ $exe -L nl -e WINDOWS-1258 W1258.nl
 $exe -L nl UTF16BE.nl
 $exe -L nl windows_cr_lf_utf16.czech
 $exe -L nld multibom.txt -X mb.xml
-cat < mb.xml
+$folialint --nooutput mb.xml >> testoutput/testencoding2.tmp 2>&1

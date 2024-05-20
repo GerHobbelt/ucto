@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([ucto],[0.33],[lamasoftware@science.ru.nl]) #adapt version number in codemeta.json as well
+AC_INIT([ucto],[0.34],[lamasoftware@science.ru.nl]) #adapt version number in codemeta.json as well
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
@@ -48,7 +48,7 @@ else
     export PKG_CONFIG_PATH="$prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
 fi
 
-AC_OSX_PKG( [icu4c] )
+AC_OSX_PKG( [icu4c libtextcat] )
 AC_MSG_NOTICE([pkg-config: PATH=$PKG_CONFIG_PATH])
 
 PKG_CHECK_MODULES( [TEXTCAT],
