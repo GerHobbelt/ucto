@@ -136,8 +136,8 @@ void usage(){
        << "\t                    -F is automatically set when inputfile has extension '.xml'" << endl
        << "\t-X                - Output FoLiA XML, use the Document ID specified with --id=" << endl
        << "\t--id <DocID>      - use the specified Document ID to label the FoLia doc." << endl
-       << "                      -X is automatically set when inputfile has extension '.xml'" << endl
-       << "\t                  (-x and -F disable usage of most other options: -nPQVs)" << endl
+       << "\t                    -X is automatically set when inputfile has extension '.xml'" << endl
+       << "\t                    (-F disables usage of most other options: -nPQVs)" << endl
        << "\t--inputclass <class>  - use the specified class to search text in the FoLiA doc.(default is 'current')" << endl
        << "\t--outputclass <class> - use the specified class to output text in the FoLiA doc. (default is 'current')" << endl
        << "\t--textclass <class>   - use the specified class for both input and output of text in the FoLiA doc. (default is 'current'). Implies --filter=NO." << endl
@@ -152,8 +152,12 @@ void usage(){
 class runtime_opts {
 public:
   runtime_opts();
-  void fill( TiCC::CL_Options& Opts );
+  void fill( TiCC::CL_Options& );
+  pair<istream *, ostream *> determine_io();
+  void check_xmlin_opt();
+  void check_xmlout_opt();
   int debug;
+  bool batchmode;
   bool tolowercase;
   bool touppercase;
   bool sentenceperlineoutput;
@@ -161,6 +165,8 @@ public:
   bool paragraphdetection;
   bool quotedetection;
   bool do_language_detect;
+  bool use_lang;
+  bool detect_lang;
   bool dofiltering;
   bool dopunctfilter;
   bool xmlin;
@@ -179,7 +185,6 @@ public:
   string inputEncoding;
   string inputclass;
   string outputclass;
-  string cfile;
   string ifile;
   string ofile;
   string input_dir;
@@ -190,10 +195,12 @@ public:
   string command_line;
   string separators;
   vector<string> language_list;
+  vector<string> input_files;
 };
 
 runtime_opts::runtime_opts():
   debug(0),
+  batchmode(false),
   tolowercase(false),
   touppercase(false),
   sentenceperlineoutput(false),
@@ -222,8 +229,36 @@ runtime_opts::runtime_opts():
   separators("+")
 {}
 
+void runtime_opts::check_xmlin_opt(){
+  if ( use_lang && !xmlin ){
+    throw TiCC::OptionError( "--uselanguages is only valid for FoLiA input" );
+  }
+  if ( docorrectwords && !xmlin ){
+    throw TiCC::OptionError( "--allow-word-corrections is only valid for FoLiA input" );
+  }
+  if ( xmlin && outputclass.empty() ){
+    if ( dopunctfilter ){
+      throw TiCC::OptionError( "--outputclass required for --filterpunct on FoLiA input ");
+    }
+    if ( touppercase ){
+      throw TiCC::OptionError( "--outputclass required for -u on FoLiA input ");
+    }
+    if ( tolowercase ){
+      throw TiCC::OptionError( "--outputclass required for -l on FoLiA input ");
+    }
+  }
+}
+
+void runtime_opts::check_xmlout_opt(){
+  if ( sentencesplit
+       && xmlout ){
+    throw TiCC::OptionError( "conflicting options --split and -X" );
+  }
+}
+
 void runtime_opts::fill( TiCC::CL_Options& Opts ){
   Opts.extract('e', inputEncoding );
+  batchmode = Opts.extract( "batch" );
   dopunctfilter = Opts.extract( "filterpunct" );
   docorrectwords = Opts.extract( "allow-word-corrections" );
   paragraphdetection = !Opts.extract( 'P' );
@@ -244,20 +279,6 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
   }
   Opts.extract( 'N', normalization );
   verbose = Opts.extract( 'v' );
-  if ( Opts.extract( 'x', docid ) ){
-    cerr << "ucto: The -x option is deprecated and will be removed in a later version.  Please use --id instead" << endl;
-    xmlout = true;
-    if ( Opts.is_present( 'X' ) ){
-      throw TiCC::OptionError( "conflicting options -x and -X" );
-    }
-    if ( Opts.is_present( "id" ) ){
-      throw TiCC::OptionError( "conflicting options -x and --id" );
-    }
-  }
-  else {
-    xmlout = Opts.extract( 'X' );
-    Opts.extract( "id", docid );
-  }
   Opts.extract( 'I', input_dir );
   if ( !input_dir.empty()
        && input_dir.back() != '/' ){
@@ -293,11 +314,12 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
   copyclass = Opts.extract( "copyclass" );
   if ( copyclass
        && inputclass == outputclass ){
-    copyclass = false;
+    throw TiCC::OptionError( "--copyclass impossible. "
+			     "--inputclass equals --outputclass" );
   }
   if ( Opts.extract( 'f' ) ){
-    cerr << "ucto: The -f option is deprecated and will be removed in a later version.  Please use --filter=NO instead" << endl;
-    dofiltering = false;
+    throw TiCC::OptionError( "ucto: The -f option not supported "
+			     "Please use --filter=NO instead" );
   }
   Opts.extract( "add-tokens", add_tokens );
   string value;
@@ -317,32 +339,25 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
 	 << endl;
     dofiltering = false;
   }
-  if ( sentencesplit ){
-    if ( xmlout ){
-      throw TiCC::OptionError( "conflicting options --split and -x or -X" );
-    }
+  ignore_tags = Opts.extract( "ignore-tag-hints" );
+  pass_thru = Opts.extract( "passthru" );
+  Opts.extract("normalize", norm_set_string );
+  Opts.extract( "separators", separators );
+  if ( Opts.extract( 'x', docid ) ){
+    throw TiCC::OptionError( "ucto: The option '-x ID' is removed. "
+			     "Please use '-X' and '--id=ID' instead" );
   }
-  if ( xmlin && outputclass.empty() ){
-    if ( dopunctfilter ){
-      throw TiCC::OptionError( "--outputclass required for --filterpunct on FoLiA input ");
-    }
-    if ( touppercase ){
-      throw TiCC::OptionError( "--outputclass required for -u on FoLiA input ");
-    }
-    if ( tolowercase ){
-      throw TiCC::OptionError( "--outputclass required for -l on FoLiA input ");
-    }
+  else {
+    xmlout = Opts.extract( 'X' );
+    Opts.extract( "id", docid );
   }
   if ( Opts.extract('d', value ) ){
     if ( !TiCC::stringTo(value,debug) ){
       throw TiCC::OptionError( "invalid value for -d: " + value );
     }
   }
-  ignore_tags = Opts.extract( "ignore-tag-hints" );
-  pass_thru = Opts.extract( "passthru" );
-  Opts.extract( "separators", separators );
-  bool use_lang = Opts.is_present( "uselanguages" );
-  bool detect_lang = Opts.is_present( "detectlanguages" );
+  use_lang = Opts.is_present( "uselanguages" );
+  detect_lang = Opts.is_present( "detectlanguages" );
   if ( detect_lang && use_lang ){
     throw TiCC::OptionError( "--detectlanguages and --uselanguages options conflict. Use only one of these." );
   }
@@ -375,8 +390,14 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
     }
   }
   Opts.extract( 'c', c_file );
-
   if ( !pass_thru ){
+    set<string> available_languages = Setting::installed_languages();
+    if ( c_file.empty()
+	 && available_languages.empty() ){
+      string mess = "ucto: The uctodata package seems not to be installed.\n"
+	"ucto: Installing uctodata is a prerequisite.";
+      throw TiCC::OptionError( mess );
+    }
     string languages;
     Opts.extract( "detectlanguages", languages );
     if ( languages.empty() ){
@@ -388,7 +409,7 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
     if ( !languages.empty() ){
       language_list = TiCC::split_at( languages, "," );
       if ( language_list.empty() ){
-	throw TiCC::OptionError( "invalid language list: " + languages );
+	throw TiCC::OptionError( "invalid languages parameter: " + languages );
       }
     }
     else {
@@ -402,14 +423,17 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       }
     }
   }
-  Opts.extract("normalize", norm_set_string );
+
   if ( !Opts.empty() ){
     string tomany = Opts.toString();
     throw TiCC::OptionError( "unhandled option(s): " + tomany );
   }
-  vector<string> files = Opts.getMassOpts();
-  if ( files.size() > 0 ){
-    ifile = files[0];
+  input_files = Opts.getMassOpts();
+}
+
+pair<istream *,ostream *> runtime_opts::determine_io(){
+  if ( input_files.size() > 0 ){
+    ifile = input_files[0];
     if ( !input_dir.empty() ){
       ifile = input_dir + ifile;
     }
@@ -417,14 +441,8 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       xmlin = true;
     }
   }
-  if ( use_lang && !xmlin ){
-    throw TiCC::OptionError( "--uselanguages is only valid for FoLiA input" );
-  }
-  if ( docorrectwords && !xmlin ){
-    throw TiCC::OptionError( "--allow-word-corrections is only valid for FoLiA input" );
-  }
-  if ( files.size() == 2 ){
-    ofile = files[1];
+  if ( input_files.size() == 2 ){
+    ofile = input_files[1];
     if ( TiCC::match_back( ofile, ".xml" ) ){
       xmlout = true;
     }
@@ -432,21 +450,12 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       ofile = output_dir + ofile;
     }
   }
-  if ( files.size() > 2 ){
+  check_xmlin_opt();
+  check_xmlout_opt();
+  if ( input_files.size() > 2 ){
     string mess = "found additional arguments on the commandline: "
-      + files[2] + "....";
+      + input_files[2] + " ....";
     throw TiCC::OptionError( mess );
-  }
-  if ( !pass_thru ){
-    set<string> available_languages = Setting::installed_languages();
-    if ( !c_file.empty() ){
-      cfile = c_file;
-    }
-    else if ( available_languages.empty() ){
-      string mess = "ucto: The uctodata package seems not to be installed.\n"
-	"ucto: Installing uctodata is a prerequisite.";
-      throw TiCC::OptionError( mess );
-    }
   }
   if ( !ifile.empty()
        && ifile == ofile ) {
@@ -465,8 +474,94 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       docid = "untitleddoc";
     }
   }
+  istream *IN = 0;
+  if (!xmlin) {
+    if ( ifile.empty() ){
+      IN = &cin;
+    }
+    else {
+      IN = new ifstream( ifile );
+      if ( !IN || !IN->good() ){
+	delete IN;
+	string mess = "ucto: problems opening inputfile '" + ifile + "'\n"
+	  + "ucto: Courageously refusing to start...";
+	throw runtime_error( mess );
+      }
+    }
+  }
 
+  ostream *OUT = 0;
+  if ( ofile.empty() ){
+    OUT = &cout;
+  }
+  else {
+    OUT = new ofstream( ofile );
+    if ( !OUT || !OUT->good() ){
+      if ( IN != &cin ){
+	delete IN;
+      }
+      string mess  = "ucto: problems opening outputfile '" + ofile + "'\n"
+	+ "ucto: Courageously refusing to start...";
+      delete OUT;
+      throw runtime_error( mess );
+    }
+  }
+  return make_pair(IN,OUT);
+}
 
+void init( TokenizerClass& tokenizer,
+	   const runtime_opts& my_options ){
+  // set debug first, so init() can be debugged too
+  tokenizer.setDebug( my_options.debug );
+  tokenizer.set_command( my_options.command_line );
+  tokenizer.setUttMarker( my_options.utt_marker );
+  tokenizer.setVerbose( my_options.verbose );
+  tokenizer.setSentenceSplit( my_options.sentencesplit );
+  tokenizer.setSentencePerLineOutput( my_options.sentenceperlineoutput );
+  tokenizer.setSentencePerLineInput( my_options.sentenceperlineinput );
+  tokenizer.setLowercase( my_options.tolowercase );
+  tokenizer.setUppercase( my_options.touppercase );
+  tokenizer.setNormSet( my_options.norm_set_string );
+  tokenizer.setParagraphDetection( my_options.paragraphdetection);
+  tokenizer.setQuoteDetection( my_options.quotedetection);
+  tokenizer.setNormalization( my_options.normalization );
+  tokenizer.setInputEncoding( my_options.inputEncoding );
+  tokenizer.setFiltering( my_options.dofiltering );
+  tokenizer.setWordCorrection( my_options.docorrectwords );
+  tokenizer.setLangDetection( my_options.do_language_detect );
+  tokenizer.setPunctFilter( my_options.dopunctfilter );
+  tokenizer.setInputClass( my_options.inputclass );
+  tokenizer.setOutputClass( my_options.outputclass );
+  tokenizer.setCopyClass( my_options.copyclass );
+  tokenizer.setXMLOutput( my_options.xmlout, my_options.docid );
+  tokenizer.setXMLInput( my_options.xmlin );
+  tokenizer.setTextRedundancy( my_options.redundancy );
+  tokenizer.setSeparators( my_options.separators ); // IMPORTANT: AFTER setNormalization
+  tokenizer.setUndLang( my_options.do_und_lang );
+  tokenizer.setNoTags( my_options.ignore_tags );
+  tokenizer.setPassThru( my_options.pass_thru );
+  if ( !my_options.pass_thru ){
+    // init from config file
+    if ( !my_options.c_file.empty()
+	 && !tokenizer.init( my_options.c_file, my_options.add_tokens ) ){
+      throw runtime_error( "ucto: initialize using '" + my_options.c_file
+			   + "' failed" );
+    }
+    else if ( !tokenizer.init( my_options.language_list,
+			       my_options.add_tokens ) ){
+      throw runtime_error( "ucto: initialize failed" );
+    }
+    if ( !my_options.c_file.empty() ){
+      cerr << "ucto: configured from file: " << my_options.c_file << endl;
+    }
+    else {
+      cerr << "ucto: configured for languages: " << my_options.language_list;
+      if ( my_options.do_und_lang ) {
+	cerr << ", also the  UND flag is set";
+      }
+      cerr << endl;
+    }
+  }
 }
 
 int main( int argc, char *argv[] ){
@@ -478,7 +573,7 @@ int main( int argc, char *argv[] ){
     TiCC::CL_Options Opts( "d:e:fhlI:O:PQunmN:vVL:c:s:x:FXT:",
 			   "filter:,filterpunct,passthru,textclass:,copyclass,"
 			   "inputclass:,outputclass:,normalize:,id:,version,"
-			   "help,detectlanguages:,uselanguages:,"
+			   "batch,help,detectlanguages:,uselanguages:,"
 			   "textredundancy:,add-tokens:,split,"
 			   "allow-word-corrections,ignore-tag-hints,"
 			   "separators:");
@@ -504,103 +599,24 @@ int main( int argc, char *argv[] ){
     usage();
     return EXIT_FAILURE;
   }
-  istream *IN = 0;
-  if (!my_options.xmlin) {
-    if ( my_options.ifile.empty() ){
-      IN = &cin;
+  pair<istream *,ostream *> io_streams = my_options.determine_io();
+  istream *IN = io_streams.first;
+  ostream *OUT = io_streams.second;
+  try {
+    TokenizerClass tokenizer;
+    try {
+      init( tokenizer, my_options );
     }
-    else {
-      IN = new ifstream( my_options.ifile );
-      if ( !IN || !IN->good() ){
-	cerr << "ucto: problems opening inputfile " << my_options.ifile << endl;
-	cerr << "ucto: Courageously refusing to start..."  << endl;
-	delete IN;
-	return EXIT_FAILURE;
-      }
-    }
-  }
-
-  ostream *OUT = 0;
-  if ( my_options.ofile.empty() ){
-    OUT = &cout;
-  }
-  else {
-    OUT = new ofstream( my_options.ofile );
-    if ( !OUT || !OUT->good() ){
-      cerr << "ucto: problems opening outputfile " << my_options.ofile << endl;
-      cerr << "ucto: Courageously refusing to start..."  << endl;
-      delete OUT;
+    catch ( ...){
       if ( IN != &cin ){
 	delete IN;
       }
+      if ( OUT != &cout ){
+	delete OUT;
+      }
       return EXIT_FAILURE;
     }
-  }
-  try {
-    TokenizerClass tokenizer;
-    // set debug first, so init() can be debugged too
-    tokenizer.setDebug( my_options.debug );
-    tokenizer.set_command( my_options.command_line );
-    tokenizer.setUttMarker( my_options.utt_marker );
-    tokenizer.setVerbose( my_options.verbose );
-    tokenizer.setSentenceSplit( my_options.sentencesplit );
-    tokenizer.setSentencePerLineOutput( my_options.sentenceperlineoutput );
-    tokenizer.setSentencePerLineInput( my_options.sentenceperlineinput );
-    tokenizer.setLowercase( my_options.tolowercase );
-    tokenizer.setUppercase( my_options.touppercase );
-    tokenizer.setNormSet( my_options.norm_set_string );
-    tokenizer.setParagraphDetection( my_options.paragraphdetection);
-    tokenizer.setQuoteDetection( my_options.quotedetection);
-    tokenizer.setNormalization( my_options.normalization );
-    tokenizer.setInputEncoding( my_options.inputEncoding );
-    tokenizer.setFiltering( my_options.dofiltering );
-    tokenizer.setWordCorrection( my_options.docorrectwords );
-    tokenizer.setLangDetection( my_options.do_language_detect );
-    tokenizer.setPunctFilter( my_options.dopunctfilter );
-    tokenizer.setInputClass( my_options.inputclass );
-    tokenizer.setOutputClass( my_options.outputclass );
-    tokenizer.setCopyClass( my_options.copyclass );
-    tokenizer.setXMLOutput( my_options.xmlout, my_options.docid );
-    tokenizer.setXMLInput( my_options.xmlin );
-    tokenizer.setTextRedundancy( my_options.redundancy );
-    tokenizer.setSeparators( my_options.separators ); // IMPORTANT: AFTER setNormalization
-    tokenizer.setUndLang( my_options.do_und_lang );
-    tokenizer.setNoTags( my_options.ignore_tags );
-    tokenizer.setPassThru( my_options.pass_thru );
-    if ( !my_options.pass_thru ){
-      // init from config file
-      if ( !my_options.cfile.empty()
-	   && !tokenizer.init( my_options.cfile, my_options.add_tokens ) ){
-	if ( IN != &cin ){
-	  delete IN;
-	}
-	if ( OUT != &cout ){
-	  delete OUT;
-	}
-	return EXIT_FAILURE;
-      }
-      else if ( !tokenizer.init( my_options.language_list,
-				 my_options.add_tokens ) ){
-	if ( IN != &cin ){
-	  delete IN;
-	}
-	if ( OUT != &cout ){
-	  delete OUT;
-	}
-	return EXIT_FAILURE;
-      }
-      if ( !my_options.cfile.empty() ){
-	cerr << "ucto: configured from file: " << my_options.cfile << endl;
-      }
-      else {
-	cerr << "ucto: configured for languages: " << my_options.language_list;
-	if ( my_options.do_und_lang ) {
-	  cerr << ", also the  UND flag is set";
-	}
-	cerr << endl;
-      }
-    }
-    if ( my_options.xmlin) {
+    if ( my_options.xmlin ) {
       folia::Document *doc = tokenizer.tokenize_folia( my_options.ifile );
       if ( doc ){
 	*OUT << doc;
