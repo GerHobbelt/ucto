@@ -92,7 +92,8 @@ void usage(){
   cerr << "\tucto [[options]] [input-file] [[output-file]]"  << endl
        << "Options:" << endl
        << "\t-c <configfile>   - Explicitly specify a configuration file" << endl
-       << "\t-I <indir>        - use this intput directory. " << endl
+       << "\t-B or --batch     - Run in batch mode. Requires -O" << endl
+       << "\t-I <inpdir>       - use this input directory. " << endl
        << "\t-O <outdir>       - set the output directory, results are stored there." << endl
        << "\t-d <value>        - set debug level" << endl
        << "\t-e <string>       - set input encoding (default UTF8)" << endl
@@ -149,11 +150,19 @@ void usage(){
        << "\t                    '-+' : special case to use only the '+' as separator" << endl;
 }
 
+void usage_small(){
+  cerr << "Usage: " << endl;
+  cerr << "\tucto [[options]] [input-file] [[output-file]]"  << endl
+       << "\t -h or --help for more info" << endl;
+}
+
 class runtime_opts {
 public:
   runtime_opts();
   void fill( TiCC::CL_Options& );
-  pair<istream *, ostream *> determine_io();
+  pair<istream *, ostream *> determine_io( const pair<string,string>& );
+  vector<pair<string,string>> create_file_list();
+  pair<string,string> create_io_pair( const string&, const string& );
   void check_xmlin_opt();
   void check_xmlout_opt();
   int debug;
@@ -170,7 +179,9 @@ public:
   bool dofiltering;
   bool dopunctfilter;
   bool xmlin;
+  bool force_xmlin;
   bool xmlout;
+  bool force_xmlout;
   bool verbose;
   bool docorrectwords;
   bool do_und_lang;
@@ -196,6 +207,7 @@ public:
   string separators;
   vector<string> language_list;
   vector<string> input_files;
+  vector<pair<string,string>> file_list;
 };
 
 runtime_opts::runtime_opts():
@@ -211,7 +223,9 @@ runtime_opts::runtime_opts():
   dofiltering(true),
   dopunctfilter(false),
   xmlin(false),
+  force_xmlin(false),
   xmlout(false),
+  force_xmlout(false),
   verbose(false),
   docorrectwords(false),
   do_und_lang(false),
@@ -258,11 +272,12 @@ void runtime_opts::check_xmlout_opt(){
 
 void runtime_opts::fill( TiCC::CL_Options& Opts ){
   Opts.extract('e', inputEncoding );
-  batchmode = Opts.extract( "batch" );
+  batchmode = Opts.extract( 'B' ) || Opts.extract( "batch" );
   dopunctfilter = Opts.extract( "filterpunct" );
   docorrectwords = Opts.extract( "allow-word-corrections" );
   paragraphdetection = !Opts.extract( 'P' );
   xmlin = Opts.extract( 'F' );
+  force_xmlin = xmlin;
   quotedetection = Opts.extract( 'Q' );
   Opts.extract( 's', utt_marker );
   touppercase = Opts.extract( 'u' );
@@ -287,7 +302,11 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       throw TiCC::OptionError( "unable to access '" + input_dir + "'" );
     }
   }
-  cerr << "INPUT DIR = " << input_dir << endl;
+  // cerr << "INPUT DIR = " << input_dir << endl;
+  if ( !batchmode
+       && !input_dir.empty() ){
+    throw TiCC::OptionError( "-I option requires batch option (-B) too." );
+  }
   Opts.extract( 'O', output_dir );
   if ( !output_dir.empty()
        && output_dir.back() != '/' ){
@@ -296,7 +315,15 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       throw TiCC::OptionError( "unable to write '" + output_dir + "'" );
     }
   }
-  cerr << "OUTPUT DIR = " << output_dir << endl;
+  if ( !input_dir.empty()
+       && output_dir == input_dir ){
+    throw TiCC::OptionError( "input dir equals output dir, asking for trouble" );
+  }
+  if ( batchmode
+       && output_dir.empty() ){
+    throw TiCC::OptionError( "batch mode requires an output dir (-O option)" );
+  }
+  //  cerr << "OUTPUT DIR = " << output_dir << endl;
   string textclass;
   Opts.extract( "textclass", textclass );
   Opts.extract( "inputclass", inputclass );
@@ -350,6 +377,15 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
   else {
     xmlout = Opts.extract( 'X' );
     Opts.extract( "id", docid );
+    if ( batchmode ){
+      if ( !docid.empty() ){
+	throw TiCC::OptionError( "ucto: The option '--id' is not allowed "
+				 "in batchmode. Document id's are generated" );
+      }
+      else {
+	force_xmlout = xmlout;
+      }
+    }
   }
   if ( Opts.extract('d', value ) ){
     if ( !TiCC::stringTo(value,debug) ){
@@ -423,46 +459,137 @@ void runtime_opts::fill( TiCC::CL_Options& Opts ){
       }
     }
   }
-
   if ( !Opts.empty() ){
     string tomany = Opts.toString();
     throw TiCC::OptionError( "unhandled option(s): " + tomany );
   }
   input_files = Opts.getMassOpts();
+  if ( input_files.size() != 0
+       && !input_dir.empty() ){
+    throw TiCC::OptionError( "found both input files and -I option." );
+  }
+  if ( batchmode
+       && input_files.size() == 0
+       && !input_dir.empty() ){
+    // get files from inputdir
+    if ( force_xmlin ){
+      input_files = TiCC::searchFilesExt( input_dir, ".xml" );
+    }
+    else {
+      input_files = TiCC::searchFiles( input_dir );
+    }
+    // for ( const auto& bla : input_files ){
+    //   cerr << "search: " << bla << endl;
+    // }
+  }
+  if ( !batchmode
+       && input_files.size() > 2 ){
+    string mess = "found additional arguments on the commandline: "
+      + input_files[2] + " ....";
+    mess += "\n maybe you want to use batchmode? (option -B)";
+    throw TiCC::OptionError( mess );
+  }
+  file_list = create_file_list();
 }
 
-pair<istream *,ostream *> runtime_opts::determine_io(){
-  if ( input_files.size() > 0 ){
-    ifile = input_files[0];
-    if ( !input_dir.empty() ){
-      ifile = input_dir + ifile;
+string generate_outname( const string& in, bool force_xmlout ){
+  string out;
+  auto pos = in.rfind(".xml");
+  if ( pos != string::npos ){
+    out = in.substr( 0, pos ) + ".ucto.xml";
+  }
+  else {
+    if ( force_xmlout ){
+      out = in + ".ucto.xml";
     }
+    else {
+      pos = in.rfind(".");
+      if ( pos != string::npos ){
+	out = in.substr( 0, pos ) + ".ucto" + in.substr(pos);
+      }
+      else {
+	out = in + ".ucto";
+      }
+    }
+  }
+  return out;
+}
+
+vector<pair<string,string>> runtime_opts::create_file_list() {
+  // create a list of pairs of input and output filenames
+  // adjusted for input and output directories
+  vector<pair<string,string>> result;
+  if ( !batchmode ){
+    if ( input_files.size() > 0 ){
+      string in = input_files[0];
+      string out;
+      if ( input_files.size() == 2 ){
+	out = input_files[1];
+      }
+      pair<string,string> p = create_io_pair( in, out );
+      result.push_back( p );
+    }
+    else {
+      result.push_back( make_pair("","") );
+    }
+  }
+  else {
+    for ( const auto& in : input_files ){
+      string bin = TiCC::basename(in);
+      string out = generate_outname( bin, force_xmlout );
+      pair<string,string> p = create_io_pair( bin, out );
+      result.push_back( p );
+    }
+  }
+  return result;
+}
+
+pair<string,string> runtime_opts::create_io_pair( const string& in,
+						  const string& out ) {
+  pair<string,string> result;
+  string in_f = in;
+  string out_f = out;
+  if ( !input_dir.empty() ){
+    in_f = input_dir + in_f;
+  }
+  if ( !out.empty() ){
+    out_f = out;
+    if ( !output_dir.empty() ){
+      out_f = output_dir + out_f;
+    }
+  }
+  result = make_pair( in_f, out_f );
+  return result;
+}
+
+pair<istream *,ostream *> runtime_opts::determine_io( const pair<string,string>& file_pair ){
+  string in = file_pair.first;
+  string out = file_pair.second;
+  if ( !in.empty() ){
+    ifile = in;
     if ( TiCC::match_back( ifile, ".xml" ) ){
       xmlin = true;
     }
+    else {
+      xmlin = false;
+    }
   }
-  if ( input_files.size() == 2 ){
-    ofile = input_files[1];
+  if ( !out.empty() ){
+    ofile = out;
     if ( TiCC::match_back( ofile, ".xml" ) ){
       xmlout = true;
     }
-    if ( !output_dir.empty() ){
-      ofile = output_dir + ofile;
+    else {
+      xmlout = force_xmlout;
     }
   }
   check_xmlin_opt();
   check_xmlout_opt();
-  if ( input_files.size() > 2 ){
-    string mess = "found additional arguments on the commandline: "
-      + input_files[2] + " ....";
-    throw TiCC::OptionError( mess );
-  }
   if ( !ifile.empty()
        && ifile == ofile ) {
-    throw TiCC::OptionError( "ucto: Output file equals input file! "
-			     "Courageously refusing to start..." );
+    throw runtime_error( "Output file equals input file! "
+			 "Courageously refusing to start..." );
   }
-
   cerr << "ucto: inputfile = "  << ifile << endl;
   cerr << "ucto: outputfile = " << ofile << endl;
   if ( docid.empty() ) {
@@ -570,7 +697,7 @@ int main( int argc, char *argv[] ){
     my_options.command_line += " " + string(argv[i]);
   }
   try {
-    TiCC::CL_Options Opts( "d:e:fhlI:O:PQunmN:vVL:c:s:x:FXT:",
+    TiCC::CL_Options Opts( "Bd:e:fhlI:O:PQunmN:vVL:c:s:x:FXT:",
 			   "filter:,filterpunct,passthru,textclass:,copyclass,"
 			   "inputclass:,outputclass:,normalize:,id:,version,"
 			   "batch,help,detectlanguages:,uselanguages:,"
@@ -596,50 +723,61 @@ int main( int argc, char *argv[] ){
   }
   catch( const TiCC::OptionError& e ){
     cerr << "ucto: " << e.what() << endl;
-    usage();
+    usage_small();
     return EXIT_FAILURE;
   }
-  pair<istream *,ostream *> io_streams = my_options.determine_io();
-  istream *IN = io_streams.first;
-  ostream *OUT = io_streams.second;
-  try {
-    TokenizerClass tokenizer;
+  for ( const auto& io_pair : my_options.file_list ){
+    pair<istream *,ostream *> io_streams;
     try {
-      init( tokenizer, my_options );
+      io_streams = my_options.determine_io( io_pair );
     }
-    catch ( ...){
-      if ( IN != &cin ){
-	delete IN;
+    catch ( const exception& e ){
+      cerr << "ucto: tokenizing '" << io_pair.first << "' to '"
+	   << io_pair.second << "' failed: " << e.what() << endl
+	   << "continue to next input." << endl;
+      continue;
+    }
+    istream *IN = io_streams.first;
+    ostream *OUT = io_streams.second;
+    try {
+      TokenizerClass tokenizer;
+      try {
+	init( tokenizer, my_options );
       }
-      if ( OUT != &cout ){
-	delete OUT;
+      catch ( ...){
+	if ( IN != &cin ){
+	  delete IN;
+	}
+	if ( OUT != &cout ){
+	  delete OUT;
+	}
+	return EXIT_FAILURE;
       }
+      if ( my_options.xmlin ) {
+	folia::Document *doc = tokenizer.tokenize_folia( my_options.ifile );
+	if ( doc ){
+	  *OUT << doc;
+	  OUT->flush();
+	  delete doc;
+	}
+	if ( OUT != &cout ){
+	  delete OUT;
+	}
+      }
+      else {
+	tokenizer.tokenize( *IN, *OUT );
+	if ( OUT != &cout ){
+	  delete OUT;
+	}
+	if ( IN != &cin ){
+	  delete IN;
+	}
+      }
+    }
+    catch ( exception &e ){
+      cerr << "ucto: " << e.what() << endl;
       return EXIT_FAILURE;
     }
-    if ( my_options.xmlin ) {
-      folia::Document *doc = tokenizer.tokenize_folia( my_options.ifile );
-      if ( doc ){
-	*OUT << doc;
-	OUT->flush();
-	delete doc;
-      }
-      if ( OUT != &cout ){
-	delete OUT;
-      }
-    }
-    else {
-      tokenizer.tokenize( *IN, *OUT );
-      if ( OUT != &cout ){
-	delete OUT;
-      }
-      if ( IN != &cin ){
-	delete IN;
-      }
-    }
-  }
-  catch ( exception &e ){
-    cerr << "ucto: " << e.what() << endl;
-    return EXIT_FAILURE;
   }
 
 }
