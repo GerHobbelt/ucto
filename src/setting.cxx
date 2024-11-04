@@ -499,7 +499,7 @@ namespace Tokenizer {
     // }
   }
 
-  string get_filename( const string& name , const string customConfigDir = ""){
+  string get_filename( const string& name , const string& customConfigDir = ""){
     string result;
     if ( TiCC::isFile( name ) ){
       result = name;
@@ -512,11 +512,12 @@ namespace Tokenizer {
         }
       }
       result = localConfigDir + name;
+      if ( TiCC::isFile( result ) ){
+          return result;
+      }
+      result = defaultConfigDir + name;
       if ( !TiCC::isFile( result ) ){
-          result = defaultConfigDir + name;
-          if ( !TiCC::isFile( result ) ){
-            result.clear();
-          }
+        result.clear();
       }
     }
     return result;
